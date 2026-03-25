@@ -1,0 +1,16 @@
+{
+  "name": "accessibility-lite",
+  "version": "0.1.0",
+  "description": "Upload media, get accessibility overlays — captions, sign language, audio descriptions",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "busboy": "^1.6.0"
+  }
+}
