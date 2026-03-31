@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { runtimeConfig } from './config/runtime.js';
-import { sendJson, sendHtml, parseJsonBody, parseUrl, notFound, methodNotAllowed } from './utils/http.js';
+import { sendJson, sendHtml, parseJsonBody, parseUrl } from './utils/http.js';
 import { formatVtt, formatTtml } from './utils/vtt.js';
 import { jobService } from './services/jobService.js';
 import { jobEmitter } from './services/pipelineService.js';
@@ -18,6 +18,73 @@ import {
 } from './config/accessibilityCatalog.js';
 
 const config = runtimeConfig();
+
+// ── Auth ────────────────────────────────────────────────────────
+
+export function isPublicPath(method, pathname) {
+  if (method !== 'GET') return false;
+  if (pathname === '/') return true;
+  if (pathname === '/health') return true;
+  if (pathname === '/v1/catalog') return true;
+  if (pathname.startsWith('/player/')) return true;
+  if (/^\/v1\/jobs\/[^/]+\/media$/.test(pathname)) return true;
+  return false;
+}
+
+export function authenticate(req, url) {
+  if (config.apiKeys.length === 0) return true;
+  const auth = req.headers['authorization'] || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
+  if (config.apiKeys.includes(token)) return true;
+  const queryKey = url.searchParams.get('api_key') || '';
+  return config.apiKeys.includes(queryKey);
+}
+
+// ── Rate Limiting ───────────────────────────────────────────────
+
+const rateLimitWindows = new Map();
+const MAX_RATE_LIMIT_ENTRIES = 10000;
+let lastRateLimitCleanup = Date.now();
+
+function cleanupRateLimitWindows() {
+  const now = Date.now();
+  if (now - lastRateLimitCleanup < 60_000) return;
+  lastRateLimitCleanup = now;
+  const windowMs = 60 * 1000;
+  for (const [ip, hits] of rateLimitWindows) {
+    const valid = hits.filter((t) => now - t < windowMs);
+    if (valid.length === 0) {
+      rateLimitWindows.delete(ip);
+    } else {
+      rateLimitWindows.set(ip, valid);
+    }
+  }
+  if (rateLimitWindows.size > MAX_RATE_LIMIT_ENTRIES) {
+    const toRemove = rateLimitWindows.size - MAX_RATE_LIMIT_ENTRIES;
+    const keys = rateLimitWindows.keys();
+    for (let i = 0; i < toRemove; i++) {
+      rateLimitWindows.delete(keys.next().value);
+    }
+  }
+}
+
+export function checkRateLimit(req) {
+  if (config.rateLimitRpm <= 0) return null;
+  cleanupRateLimitWindows();
+  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const hits = (rateLimitWindows.get(ip) || []).filter((t) => now - t < windowMs);
+  hits.push(now);
+  rateLimitWindows.set(ip, hits);
+  if (hits.length > config.rateLimitRpm) {
+    const retryAfter = Math.ceil((hits[0] + windowMs - now) / 1000);
+    return retryAfter;
+  }
+  return null;
+}
+
+// ── Routing helpers ─────────────────────────────────────────────
 
 function extractParams(pathname, pattern) {
   const patternParts = pattern.split('/');
@@ -65,6 +132,18 @@ async function handleRequest(req, res) {
   const method = req.method;
 
   try {
+    // Rate limiting
+    const retryAfter = checkRateLimit(req);
+    if (retryAfter !== null) {
+      res.setHeader('Retry-After', String(retryAfter));
+      return sendJson(res, 429, { error: 'Rate limit exceeded', retry_after_seconds: retryAfter });
+    }
+
+    // Auth
+    if (!isPublicPath(method, pathname) && !authenticate(req, url)) {
+      return sendJson(res, 401, { error: 'Missing or invalid API key' });
+    }
+
     // Health
     if (pathname === '/health' && method === 'GET') {
       return sendJson(res, 200, { status: 'ok', jobs: jobService.getJob ? 'in_memory' : 'none' });
@@ -106,7 +185,7 @@ async function handleRequest(req, res) {
     params = extractParams(pathname, '/jobs/:id/options');
     if (params && method === 'GET') {
       const job = jobService.getJob(params.id);
-      if (!job) return sendHtml(res, 404, '<h1>Job not found</h1>');
+      if (!job) return sendHtml(res, 404, uiService.buildErrorPage(404, 'Job not found', 'The job you requested does not exist or has expired.'));
       return sendHtml(res, 200, uiService.buildOptionsPage(job));
     }
 
@@ -163,9 +242,9 @@ async function handleRequest(req, res) {
     params = extractParams(pathname, '/jobs/:id/results');
     if (params && method === 'GET') {
       const job = jobService.getJob(params.id);
-      if (!job) return sendHtml(res, 404, '<h1>Job not found</h1>');
+      if (!job) return sendHtml(res, 404, uiService.buildErrorPage(404, 'Job not found', 'The job you requested does not exist or has expired.'));
       if (job.status !== 'complete') {
-        return sendHtml(res, 200, `<!doctype html><html><head><meta charset="utf-8"><title>Processing...</title><meta http-equiv="refresh" content="3"></head><body style="background:#07111f;color:#f7fbff;font-family:sans-serif;text-align:center;padding:60px"><h1>Processing...</h1><p>Progress: ${job.progress}%</p><p>This page will refresh automatically.</p></body></html>`);
+        return sendHtml(res, 200, uiService.buildErrorPage(202, 'Processing...', `Progress: ${job.progress}%. This page will refresh automatically.`, { autoRefresh: 3 }));
       }
       const outputs = jobService.getOutputs(params.id);
       return sendHtml(res, 200, uiService.buildResultsPage(job, outputs));
@@ -175,8 +254,8 @@ async function handleRequest(req, res) {
     params = extractParams(pathname, '/player/:id');
     if (params && method === 'GET') {
       const job = jobService.getJob(params.id);
-      if (!job) return sendHtml(res, 404, '<h1>Job not found</h1>');
-      if (job.status !== 'complete') return sendHtml(res, 200, '<h1>Processing not complete</h1>');
+      if (!job) return sendHtml(res, 404, uiService.buildErrorPage(404, 'Job not found', 'The job you requested does not exist or has expired.'));
+      if (job.status !== 'complete') return sendHtml(res, 200, uiService.buildErrorPage(202, 'Processing not complete', 'Your media is still being processed. Please check back shortly.', { autoRefresh: 5 }));
       const outputs = jobService.getOutputs(params.id);
       return sendHtml(res, 200, uiService.buildPlayerPage(job, outputs));
     }
@@ -289,7 +368,7 @@ async function handleRequest(req, res) {
       return;
     }
 
-    return notFound(res);
+    return sendHtml(res, 404, uiService.buildErrorPage(404, 'Page not found', 'The page you requested does not exist.'));
   } catch (err) {
     console.error('Request error:', err);
     if (!res.headersSent) {

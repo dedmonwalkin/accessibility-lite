@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MODEL_PROVIDER=mock
+      - TRANSLATION_PROVIDER=mock
+      - MAX_UPLOAD_MB=500
+    volumes:
+      - uploads:/app/uploads
+
+volumes:
+  uploads:

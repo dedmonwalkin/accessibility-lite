@@ -8,7 +8,7 @@ import {
   SIGN_OVERLAY_THEMES
 } from '../config/accessibilityCatalog.js';
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -105,6 +105,10 @@ const SHARED_STYLES = `
     font-size: 0.85rem;
   }
   a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .progress-bar {
     width: 100%;
     height: 8px;
@@ -120,9 +124,51 @@ const SHARED_STYLES = `
     transition: width 0.3s;
     width: 0%;
   }
+
+  @media (max-width: 768px) {
+    .container { padding: 24px 16px; }
+    .radio-group { flex-direction: column; }
+    .panel { padding: 16px; }
+  }
+  @media (max-width: 480px) {
+    .container { padding: 16px 12px; }
+    h1 { font-size: 1.3rem; }
+    .btn { width: 100%; text-align: center; }
+    .dl-link { display: block; text-align: center; margin: 4px 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 `;
 
 export const uiService = {
+  escapeHtml,
+
+  buildErrorPage(statusCode, title, message, { autoRefresh = 0 } = {}) {
+    const refreshTag = autoRefresh > 0 ? `<meta http-equiv="refresh" content="${autoRefresh}">` : '';
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  ${refreshTag}
+  <title>${escapeHtml(title)} — Accessibility Lite</title>
+  <style>${SHARED_STYLES}</style>
+</head>
+<body>
+  <main class="container" style="text-align:center;padding-top:80px">
+    <p style="font-size:3rem;margin:0;opacity:0.3">${escapeHtml(String(statusCode))}</p>
+    <h1>${escapeHtml(title)}</h1>
+    <p class="muted" style="margin:12px 0 24px" aria-live="polite">${escapeHtml(message)}</p>
+    <a href="/" class="btn" style="text-decoration:none">Back to home</a>
+  </main>
+</body>
+</html>`;
+  },
+
   buildUploadPage() {
     return `<!doctype html>
 <html lang="en">
@@ -150,29 +196,30 @@ export const uiService = {
   </style>
 </head>
 <body>
-  <div class="container">
+  <main class="container">
     <h1>Accessibility Lite</h1>
     <p class="subtitle">Upload media. Get captions, sign language overlays, and audio descriptions.</p>
 
     <form id="uploadForm" enctype="multipart/form-data">
       <div class="panel">
-        <div class="dropzone" id="dropzone">
+        <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="File upload area. Press Enter or Space to browse files.">
           <p class="big">Drop your file here</p>
           <p class="muted">or click to browse</p>
           <p class="muted" style="font-size:0.8rem">Video: MP4, WebM, MOV &middot; Audio: MP3, WAV, OGG, M4A &middot; Max 500MB</p>
-          <input type="file" name="file" id="fileInput" accept="video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/mp4" style="display:none" required />
+          <input type="file" name="file" id="fileInput" accept="video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/mp4" style="display:none" required aria-required="true" />
         </div>
-        <div class="file-info" id="fileInfo" style="display:none"></div>
+        <div class="file-info" id="fileInfo" style="display:none" aria-live="polite"></div>
       </div>
 
       <button type="submit" class="btn" id="uploadBtn" disabled>Upload &amp; Continue</button>
-      <p class="error" id="error" style="display:none"></p>
+      <p class="error" id="error" style="display:none" aria-live="polite" role="alert"></p>
+      <span id="uploadStatus" aria-live="polite" style="position:absolute;left:-9999px"></span>
 
-      <div class="progress-bar" id="uploadProgress" style="display:none">
+      <div class="progress-bar" id="uploadProgress" style="display:none" aria-hidden="true">
         <div class="fill" id="uploadFill"></div>
       </div>
     </form>
-  </div>
+  </main>
 
   <script>
     const dropzone = document.getElementById('dropzone');
@@ -182,6 +229,7 @@ export const uiService = {
     const errorEl = document.getElementById('error');
 
     dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
     dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
     dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
     dropzone.addEventListener('drop', (e) => {
@@ -217,7 +265,11 @@ export const uiService = {
       try {
         const xhr = new XMLHttpRequest();
         xhr.upload.addEventListener('progress', (ev) => {
-          if (ev.lengthComputable) fill.style.width = Math.round(ev.loaded / ev.total * 100) + '%';
+          if (ev.lengthComputable) {
+            var pct = Math.round(ev.loaded / ev.total * 100);
+            fill.style.width = pct + '%';
+            document.getElementById('uploadStatus').textContent = 'Uploading: ' + pct + '%';
+          }
         });
         xhr.addEventListener('load', () => {
           if (xhr.status >= 200 && xhr.status < 300) {
@@ -291,7 +343,7 @@ export const uiService = {
   <style>${SHARED_STYLES}</style>
 </head>
 <body>
-  <div class="container">
+  <main class="container">
     <h1>Accessibility Options</h1>
     <p class="subtitle">${escapeHtml(job.original_filename)} &middot; ${(job.duration_ms / 1000).toFixed(1)}s &middot; ${job.has_video ? 'Video' : 'Audio'}</p>
 
@@ -299,16 +351,16 @@ export const uiService = {
       <div class="panel">
         <span class="pill">Captions</span>
         <label for="output_languages">Output Languages</label>
-        <select name="output_languages" id="output_languages" multiple>${langOptions}</select>
+        <select name="output_languages" id="output_languages" multiple aria-required="true">${langOptions}</select>
 
-        <label>Caption Style</label>
-        <div class="radio-group">${radioGroup('caption_style', SUPPORTED_CAPTION_STYLES, prefs.caption_style)}</div>
+        <label id="caption-style-label">Caption Style</label>
+        <div class="radio-group" role="radiogroup" aria-labelledby="caption-style-label">${radioGroup('caption_style', SUPPORTED_CAPTION_STYLES, prefs.caption_style)}</div>
       </div>
 
       <div class="panel">
         <span class="pill">Audio Description</span>
-        <label>Style</label>
-        <div class="radio-group">${radioGroup('audio_description_style', SUPPORTED_AUDIO_DESCRIPTION_STYLES, prefs.audio_description_style)}</div>
+        <label id="audio-desc-style-label">Style</label>
+        <div class="radio-group" role="radiogroup" aria-labelledby="audio-desc-style-label">${radioGroup('audio_description_style', SUPPORTED_AUDIO_DESCRIPTION_STYLES, prefs.audio_description_style)}</div>
       </div>
 
       <div class="panel">
@@ -316,37 +368,38 @@ export const uiService = {
         <label for="sign_language">Language</label>
         <select name="sign_language" id="sign_language">${signLangOptions}</select>
 
-        <label>Presentation Mode</label>
-        <div class="radio-group">${radioGroup('sign_presentation_mode', SUPPORTED_SIGN_PRESENTATION_MODES, prefs.sign_presentation_mode)}</div>
+        <label id="sign-mode-label">Presentation Mode</label>
+        <div class="radio-group" role="radiogroup" aria-labelledby="sign-mode-label">${radioGroup('sign_presentation_mode', SUPPORTED_SIGN_PRESENTATION_MODES, prefs.sign_presentation_mode)}</div>
 
-        <label>Overlay Theme</label>
-        <div class="radio-group" style="flex-direction:column">${themeCards}</div>
+        <label id="sign-theme-label">Overlay Theme</label>
+        <div class="radio-group" role="radiogroup" aria-labelledby="sign-theme-label" style="flex-direction:column">${themeCards}</div>
       </div>
 
       <div class="panel">
         <span class="pill">Display</span>
-        <label>UI Mode</label>
-        <div class="radio-group">${radioGroup('ui_mode', SUPPORTED_UI_MODES, prefs.ui_mode)}</div>
+        <label id="ui-mode-label">UI Mode</label>
+        <div class="radio-group" role="radiogroup" aria-labelledby="ui-mode-label">${radioGroup('ui_mode', SUPPORTED_UI_MODES, prefs.ui_mode)}</div>
       </div>
 
       <button type="submit" class="btn" id="processBtn">Process Media</button>
-      <p class="error" id="error" style="display:none"></p>
+      <p class="error" id="error" style="display:none" aria-live="polite" role="alert"></p>
 
-      <div id="progressSection" style="display:none">
-        <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+      <div id="progressSection" style="display:none" aria-live="polite">
+        <div class="progress-bar" aria-hidden="true"><div class="fill" id="progressFill"></div></div>
         <p class="muted" id="progressStep">Starting...</p>
       </div>
     </form>
-  </div>
+  </main>
 
   <script>
     const jobId = ${JSON.stringify(job.id)};
 
     document.getElementById('optionsForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = document.getElementById('processBtn');
-      const errorEl = document.getElementById('error');
+      var btn = document.getElementById('processBtn');
+      var errorEl = document.getElementById('error');
       btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Processing\u2026';
       errorEl.style.display = 'none';
 
       const form = e.target;
@@ -392,6 +445,7 @@ export const uiService = {
               errorEl.textContent = data.message || 'Processing failed';
               errorEl.style.display = 'block';
               btn.disabled = false;
+              btn.textContent = 'Process Media';
             }
           } catch (_) {}
         };
@@ -403,6 +457,7 @@ export const uiService = {
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';
         btn.disabled = false;
+        btn.textContent = 'Process Media';
       }
     });
   </script>
@@ -423,8 +478,8 @@ export const uiService = {
     const audioPreview = audioDesc.slice(0, 5).map((a) => escapeHtml(a.text)).join('<br>');
 
     const langDownloads = (prefs.output_languages || ['en-US']).map((lang) =>
-      `<a href="/v1/jobs/${safeId}/captions.vtt?language=${lang}" class="dl-link">WebVTT (${lang})</a>
-       <a href="/v1/jobs/${safeId}/captions.ttml?language=${lang}" class="dl-link">TTML (${lang})</a>`
+      `<a href="/v1/jobs/${safeId}/captions.vtt?language=${lang}" class="dl-link" download>WebVTT (${lang})</a>
+       <a href="/v1/jobs/${safeId}/captions.ttml?language=${lang}" class="dl-link" download>TTML (${lang})</a>`
     ).join(' ');
 
     const mediaTag = job.has_video
@@ -503,29 +558,29 @@ export const uiService = {
   </style>
 </head>
 <body>
-  <div class="container">
+  <main class="container">
     <h1>Results</h1>
     <p class="subtitle">${escapeHtml(job.original_filename)}</p>
 
-    <div class="panel">
+    <div class="panel" role="region" aria-label="Summary statistics">
       <span class="stat"><strong>${captions.length}</strong> caption segments</span>
       <span class="stat"><strong>${audioDesc.length}</strong> audio descriptions</span>
       <span class="stat"><strong>${signScript.length}</strong> sign segments</span>
       <span class="stat"><strong>${(job.duration_ms / 1000).toFixed(1)}s</strong> duration</span>
     </div>
 
-    <div class="panel">
+    <div class="panel" role="region" aria-label="Media player">
       <span class="pill">Player</span>
       ${mediaTag}
     </div>
 
-    <div class="panel">
+    <div class="panel" role="region" aria-label="Caption preview">
       <span class="pill">Captions</span>
       <p style="margin:8px 0;font-size:0.9rem;line-height:1.6">${captionPreview || '<em class="muted">No captions generated</em>'}</p>
       ${captions.length > 10 ? '<p class="muted">...and ' + (captions.length - 10) + ' more</p>' : ''}
     </div>
 
-    <div class="sign-overlay${theme.background.style === 'gradient' ? ' bg-gradient' : theme.background.style === 'textured' ? ' bg-textured' : ''}">
+    <div class="sign-overlay${theme.background.style === 'gradient' ? ' bg-gradient' : theme.background.style === 'textured' ? ' bg-textured' : ''}" role="region" aria-label="Sign language preview">
       <span class="pill" style="border-color:var(--sign-accent);margin-bottom:12px">Sign Language — ${escapeHtml(prefs.sign_language)} — ${escapeHtml(theme.name)}</span>
       ${signScript.slice(0, 8).map((s) => `
         <div class="sign-segment">
@@ -535,31 +590,31 @@ export const uiService = {
       `).join('') || '<em class="muted">No sign data</em>'}
     </div>
 
-    <div class="panel">
+    <div class="panel" role="region" aria-label="Audio description preview">
       <span class="pill">Audio Description</span>
       <p style="margin:8px 0;font-size:0.9rem;line-height:1.6">${audioPreview || '<em class="muted">No audio descriptions</em>'}</p>
     </div>
 
-    <div class="panel">
+    <div class="panel" role="region" aria-label="Download links">
       <span class="pill">Downloads</span>
       <div style="margin-top:8px">
         ${langDownloads}
-        <a href="/v1/jobs/${safeId}/audio-description.json" class="dl-link">Audio Description (JSON)</a>
-        <a href="/v1/jobs/${safeId}/sign-data.json" class="dl-link">Sign Data (JSON)</a>
+        <a href="/v1/jobs/${safeId}/audio-description.json" class="dl-link" download>Audio Description (JSON)</a>
+        <a href="/v1/jobs/${safeId}/sign-data.json" class="dl-link" download>Sign Data (JSON)</a>
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" role="region" aria-label="Share link">
       <span class="pill">Share</span>
       <p class="muted" style="margin:6px 0">Shareable player link:</p>
       <div class="share-box">
-        <input type="text" id="shareUrl" readonly />
-        <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('shareUrl').value)">Copy</button>
+        <input type="text" id="shareUrl" readonly aria-label="Shareable player URL" />
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('shareUrl').value);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button>
       </div>
     </div>
 
     <p><a href="/">&larr; Process another file</a></p>
-  </div>
+  </main>
 
   <script>
     document.getElementById('shareUrl').value = window.location.origin + '/player/${safeId}';
@@ -626,25 +681,25 @@ export const uiService = {
   </style>
 </head>
 <body>
-  <div class="container">
+  <main class="container">
     <h1>${escapeHtml(job.original_filename)}</h1>
     <p class="subtitle">Accessibility Lite Player</p>
 
-    <div class="panel">${mediaTag}</div>
+    <div class="panel" role="region" aria-label="Media player">${mediaTag}</div>
 
-    <div class="panel">
+    <div class="panel" role="region" aria-label="Captions">
       <span class="pill">Live Captions</span>
-      <pre id="captions">${captions.map((c) => escapeHtml(c.text)).join('\n') || 'No captions'}</pre>
+      <pre id="captions" aria-live="polite">${captions.map((c) => escapeHtml(c.text)).join('\n') || 'No captions'}</pre>
     </div>
 
-    <div class="sign-overlay${theme.background.style === 'gradient' ? ' bg-gradient' : theme.background.style === 'textured' ? ' bg-textured' : ''}" id="signOverlay">
+    <div class="sign-overlay${theme.background.style === 'gradient' ? ' bg-gradient' : theme.background.style === 'textured' ? ' bg-textured' : ''}" id="signOverlay" role="region" aria-label="Sign language overlay">
       <div class="sign-header">
         <span class="pill" style="border-color:var(--sign-accent)">Sign Language — ${escapeHtml(prefs.sign_language)}</span>
         <select class="theme-select" id="themeSelect" aria-label="Sign overlay theme">
           ${SIGN_OVERLAY_THEMES.map((t) => `<option value="${t.id}"${t.id === theme.id ? ' selected' : ''}>${escapeHtml(t.name)}</option>`).join('')}
         </select>
       </div>
-      <div class="sign-segments" id="signSegments">
+      <div class="sign-segments" id="signSegments" aria-live="polite">
         ${signScript.map((s) => `
           <div class="sign-segment">
             ${s.gloss_tokens.map((t) => `<span class="sign-token">${escapeHtml(t)}</span>`).join('')}
@@ -654,23 +709,23 @@ export const uiService = {
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" role="region" aria-label="Audio description">
       <span class="pill">Audio Description</span>
-      <pre id="audio">${audioDesc.map((a) => escapeHtml(a.text)).join('\n') || 'No audio descriptions'}</pre>
+      <pre id="audio" aria-live="polite">${audioDesc.map((a) => escapeHtml(a.text)).join('\n') || 'No audio descriptions'}</pre>
     </div>
 
-    <div class="panel">
+    <div class="panel" role="region" aria-label="Download links">
       <span class="pill">Downloads</span>
       <div style="margin-top:8px">
         ${(prefs.output_languages || ['en-US']).map((lang) =>
-          `<a href="/v1/jobs/${safeId}/captions.vtt?language=${lang}" class="dl-link">VTT (${lang})</a>
-           <a href="/v1/jobs/${safeId}/captions.ttml?language=${lang}" class="dl-link">TTML (${lang})</a>`
+          `<a href="/v1/jobs/${safeId}/captions.vtt?language=${lang}" class="dl-link" download>VTT (${lang})</a>
+           <a href="/v1/jobs/${safeId}/captions.ttml?language=${lang}" class="dl-link" download>TTML (${lang})</a>`
         ).join('')}
-        <a href="/v1/jobs/${safeId}/audio-description.json" class="dl-link">Audio Desc (JSON)</a>
-        <a href="/v1/jobs/${safeId}/sign-data.json" class="dl-link">Sign Data (JSON)</a>
+        <a href="/v1/jobs/${safeId}/audio-description.json" class="dl-link" download>Audio Desc (JSON)</a>
+        <a href="/v1/jobs/${safeId}/sign-data.json" class="dl-link" download>Sign Data (JSON)</a>
       </div>
     </div>
-  </div>
+  </main>
 
   <script>
     const allThemes = ${allThemes};
