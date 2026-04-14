@@ -7,6 +7,9 @@ import { formatVtt, formatTtml } from './utils/vtt.js';
 import { jobService } from './services/jobService.js';
 import { jobEmitter } from './services/pipelineService.js';
 import { uiService } from './services/uiService.js';
+import { persistenceService } from './services/persistence/persistenceService.js';
+import { cleanupService } from './services/cleanupService.js';
+import { sampleService } from './services/sampleService.js';
 import {
   SUPPORTED_OUTPUT_LANGUAGES,
   SUPPORTED_SIGN_LANGUAGES,
@@ -146,7 +149,9 @@ async function handleRequest(req, res) {
 
     // Health
     if (pathname === '/health' && method === 'GET') {
-      return sendJson(res, 200, { status: 'ok', jobs: jobService.getJob ? 'in_memory' : 'none' });
+      let db = 'disabled';
+      try { await persistenceService.ping(); db = 'connected'; } catch { db = 'unavailable'; }
+      return sendJson(res, 200, { status: 'ok', persistence: db });
     }
 
     // Upload page
@@ -165,6 +170,12 @@ async function handleRequest(req, res) {
         ui_modes: SUPPORTED_UI_MODES,
         sign_overlay_themes: SIGN_OVERLAY_THEMES
       });
+    }
+
+    // Create sample job
+    if (pathname === '/v1/jobs/sample' && method === 'POST') {
+      const job = await sampleService.createSampleJob();
+      return sendJson(res, 201, job);
     }
 
     // Create job (multipart upload)
@@ -187,6 +198,12 @@ async function handleRequest(req, res) {
       const job = jobService.getJob(params.id);
       if (!job) return sendHtml(res, 404, uiService.buildErrorPage(404, 'Job not found', 'The job you requested does not exist or has expired.'));
       return sendHtml(res, 200, uiService.buildOptionsPage(job));
+    }
+
+    // Snapshot trigger
+    if (pathname === '/v1/persistence/snapshot' && method === 'POST') {
+      const body = await parseJsonBody(req);
+      return sendJson(res, 200, await persistenceService.snapshot(body.reason || 'manual_api'));
     }
 
     // Start processing
@@ -381,7 +398,52 @@ async function handleRequest(req, res) {
 
 const server = http.createServer(handleRequest);
 
-server.listen(config.port, () => {
-  console.log(`Accessibility Lite running on http://localhost:${config.port}`);
-  console.log(`Model provider: ${config.modelProvider}`);
+// Snapshot when any job finishes — listen for progress events and trigger on complete/error
+const originalEmit = jobEmitter.emit.bind(jobEmitter);
+jobEmitter.emit = function (event, data) {
+  originalEmit(event, data);
+  if (data && (data.type === 'complete' || data.type === 'error') && event.startsWith('job:')) {
+    persistenceService.snapshot(`job.${data.type}`).catch(() => {});
+  }
+};
+
+async function start() {
+  await persistenceService.configure(config);
+  await persistenceService.loadLatest();
+
+  server.listen(config.port, () => {
+    console.log(`Accessibility Lite running on http://localhost:${config.port}`);
+    console.log(`Model provider: ${config.modelProvider}`);
+    console.log(`Persistence: ${config.enablePostgres ? 'postgres' : 'in-memory only'}`);
+  });
+
+  // Periodic snapshots
+  if (config.snapshotIntervalMs > 0) {
+    setInterval(() => {
+      persistenceService.snapshot('interval').catch(() => {});
+    }, config.snapshotIntervalMs);
+  }
+
+  // Job cleanup every hour (24h TTL)
+  setInterval(() => {
+    cleanupService.run();
+  }, 60 * 60 * 1000);
+  // Run once on startup to clear stale jobs from previous sessions
+  cleanupService.run();
+
+  // Graceful shutdown
+  async function shutdown() {
+    console.log('Shutting down...');
+    await persistenceService.snapshot('shutdown').catch(() => {});
+    await persistenceService.close();
+    server.close();
+    process.exit(0);
+  }
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+}
+
+start().catch((err) => {
+  console.error('Failed to start:', err);
+  process.exit(1);
 });

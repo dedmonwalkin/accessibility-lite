@@ -29,6 +29,28 @@ function langName(code) {
   return map[code] || code;
 }
 
+const FAVICON_SVG = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#07111f"/><circle cx="16" cy="14" r="7" fill="none" stroke="#5bd7ff" stroke-width="2"/><path d="M10 22c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="#74ffa8" stroke-width="2" stroke-linecap="round"/><rect x="6" y="26" width="20" height="2" rx="1" fill="#5bd7ff" opacity="0.5"/></svg>')}`;
+
+const OG_META = `
+    <meta property="og:title" content="Accessibility Lite — Captions, Audio Descriptions & Sign Language" />
+    <meta property="og:description" content="Open source accessibility pipeline. Upload any video or audio and get captions, AI audio descriptions, and sign language overlays. Free, private, self-hostable." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Accessibility Lite" />
+    <meta name="twitter:description" content="Open source pipeline for captions, audio descriptions, and sign language. Upload media, get accessibility." />
+    <meta name="description" content="Open source accessibility pipeline. Upload any video or audio and get captions, AI audio descriptions, and sign language overlays." />
+    <link rel="icon" type="image/svg+xml" href="${FAVICON_SVG}" />`;
+
+const FOOTER_HTML = `
+  <footer style="border-top:1px solid #1a2d4a;margin-top:48px;padding:24px;text-align:center;color:var(--muted);font-size:0.85rem">
+    <p style="margin:0 0 8px">Built with purpose by <a href="https://github.com/dedmonwalkin" style="color:var(--accent);text-decoration:none">Isabella &amp; Tan</a></p>
+    <p style="margin:0 0 8px">
+      <a href="https://github.com/dedmonwalkin/accessibility-lite" style="color:var(--accent);text-decoration:none;margin-right:16px">GitHub</a>
+      <span style="opacity:0.5">Open Source &middot; MIT License</span>
+    </p>
+    <p style="margin:0;font-size:0.8rem;opacity:0.6">Making media accessible for everyone.</p>
+  </footer>`;
+
 const SHARED_STYLES = `
   :root {
     --bg: #07111f;
@@ -95,6 +117,21 @@ const SHARED_STYLES = `
   }
   .btn:hover { background: var(--accent-hover); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-outline {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 28px;
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-outline:hover { background: rgba(91, 215, 255, 0.1); }
   .muted { color: var(--muted); }
   .pill {
     display: inline-block;
@@ -134,6 +171,7 @@ const SHARED_STYLES = `
     .container { padding: 16px 12px; }
     h1 { font-size: 1.3rem; }
     .btn { width: 100%; text-align: center; }
+    .btn-outline { width: 100%; text-align: center; }
     .dl-link { display: block; text-align: center; margin: 4px 0; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -156,6 +194,7 @@ export const uiService = {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   ${refreshTag}
   <title>${escapeHtml(title)} — Accessibility Lite</title>
+  ${OG_META}
   <style>${SHARED_STYLES}</style>
 </head>
 <body>
@@ -165,6 +204,7 @@ export const uiService = {
     <p class="muted" style="margin:12px 0 24px" aria-live="polite">${escapeHtml(message)}</p>
     <a href="/" class="btn" style="text-decoration:none">Back to home</a>
   </main>
+  ${FOOTER_HTML}
 </body>
 </html>`;
   },
@@ -175,8 +215,56 @@ export const uiService = {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Accessibility Lite — Upload</title>
+  <title>Accessibility Lite — Captions, Audio Descriptions &amp; Sign Language</title>
+  ${OG_META}
   <style>${SHARED_STYLES}
+    .hero { text-align: center; padding: 48px 0 32px; }
+    .hero h1 { font-size: 2.2rem; margin: 0 0 12px; line-height: 1.2; }
+    .hero .tagline { font-size: 1.15rem; color: var(--muted); margin: 0 0 32px; max-width: 520px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .badges { display: flex; gap: 12px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--muted); border: 1px solid #1a2d4a; border-radius: 999px; padding: 4px 12px; }
+    .badge svg { width: 14px; height: 14px; fill: currentColor; }
+
+    .story-section { margin: 40px 0; }
+    .story-section blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 0; padding: 16px 20px;
+      background: rgba(91, 215, 255, 0.04);
+      border-radius: 0 12px 12px 0;
+      font-style: italic; color: var(--muted); line-height: 1.6;
+    }
+    .story-section p { margin: 12px 0; line-height: 1.6; }
+
+    .how-it-works { margin: 48px 0; }
+    .how-it-works h2 { text-align: center; margin: 0 0 24px; font-size: 1.4rem; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .step {
+      background: color-mix(in oklab, var(--card) 85%, black);
+      border-radius: 14px; padding: 24px 20px; text-align: center;
+    }
+    .step-number {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--accent); color: #07111f; font-weight: 700; font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
+    .step h3 { margin: 0 0 8px; font-size: 1rem; }
+    .step p { margin: 0; font-size: 0.9rem; color: var(--muted); line-height: 1.4; }
+
+    .features { margin: 48px 0; }
+    .features h2 { text-align: center; margin: 0 0 24px; font-size: 1.4rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .feature {
+      background: color-mix(in oklab, var(--card) 85%, black);
+      border-radius: 14px; padding: 20px;
+    }
+    .feature h3 { margin: 0 0 6px; font-size: 0.95rem; color: var(--accent); }
+    .feature p { margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.4; }
+
+    .upload-section { margin: 48px 0 0; }
+    .upload-section h2 { text-align: center; margin: 0 0 24px; font-size: 1.4rem; }
+
     .dropzone {
       border: 2px dashed #2f5379;
       border-radius: 14px;
@@ -193,33 +281,118 @@ export const uiService = {
     .dropzone .big { font-size: 1.2rem; font-weight: 600; }
     .file-info { margin-top: 12px; color: var(--success); }
     .error { color: var(--error); margin-top: 12px; }
+    .upload-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 1.7rem; }
+      .steps { grid-template-columns: 1fr; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .upload-actions { flex-direction: column; }
+    }
   </style>
 </head>
 <body>
   <main class="container">
-    <h1>Accessibility Lite</h1>
-    <p class="subtitle">Upload media. Get captions, sign language overlays, and audio descriptions.</p>
+    <!-- Hero -->
+    <section class="hero">
+      <h1>Make any media accessible.</h1>
+      <p class="tagline">Upload a video or audio file and get captions, AI-powered audio descriptions, and sign language overlays — all in one pipeline.</p>
+      <div class="hero-actions">
+        <a href="#upload" class="btn" style="text-decoration:none">Try it now</a>
+        <a href="https://github.com/dedmonwalkin/accessibility-lite" class="btn-outline" style="text-decoration:none" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+      <div class="badges">
+        <span class="badge"><svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> Open Source</span>
+        <span class="badge">21 Languages</span>
+        <span class="badge">10 Sign Languages</span>
+        <span class="badge">Self-Hostable</span>
+      </div>
+    </section>
 
-    <form id="uploadForm" enctype="multipart/form-data">
+    <!-- Why this exists -->
+    <section class="story-section">
       <div class="panel">
-        <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="File upload area. Press Enter or Space to browse files.">
-          <p class="big">Drop your file here</p>
-          <p class="muted">or click to browse</p>
-          <p class="muted" style="font-size:0.8rem">Video: MP4, WebM, MOV &middot; Audio: MP3, WAV, OGG, M4A &middot; Max 500MB</p>
-          <input type="file" name="file" id="fileInput" accept="video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/mp4" style="display:none" required aria-required="true" />
+        <blockquote>She had nothing she could do anymore. She couldn't drive, she couldn't read. But she would still try to watch as much TV as she could, because that was her habit.</blockquote>
+        <p>This project was built because someone we loved was losing her connection to the world. Audio descriptions could have narrated what she couldn't see anymore. Captions exist in some tools, but nobody bundles all three accessibility modalities — captions, audio descriptions, and sign language — in a single open source pipeline.</p>
+        <p><strong style="color:var(--accent)">Until now.</strong></p>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="how-it-works">
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Upload</h3>
+          <p>Drop any video or audio file. MP4, WebM, MOV, MP3, WAV — we handle it.</p>
         </div>
-        <div class="file-info" id="fileInfo" style="display:none" aria-live="polite"></div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Process</h3>
+          <p>AI transcribes speech, generates scene descriptions, and creates sign language gloss tokens.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Download</h3>
+          <p>Get WebVTT/TTML captions, audio descriptions, and sign overlays. Share via a player link.</p>
+        </div>
       </div>
+    </section>
 
-      <button type="submit" class="btn" id="uploadBtn" disabled>Upload &amp; Continue</button>
-      <p class="error" id="error" style="display:none" aria-live="polite" role="alert"></p>
-      <span id="uploadStatus" aria-live="polite" style="position:absolute;left:-9999px"></span>
-
-      <div class="progress-bar" id="uploadProgress" style="display:none" aria-hidden="true">
-        <div class="fill" id="uploadFill"></div>
+    <!-- Features -->
+    <section class="features">
+      <h2>What you get</h2>
+      <div class="feature-grid">
+        <div class="feature">
+          <h3>Captions</h3>
+          <p>AI-powered transcription in WebVTT and TTML formats. Standard, simplified, or verbatim styles. Translatable to 21 languages.</p>
+        </div>
+        <div class="feature">
+          <h3>Audio Descriptions</h3>
+          <p>AI-generated narration of visual content during dialogue gaps — so people who can't see the screen still know what's happening.</p>
+        </div>
+        <div class="feature">
+          <h3>Sign Language</h3>
+          <p>Gloss tokens and sign cards for 10 sign languages. 6 overlay themes including high contrast and kid-friendly modes.</p>
+        </div>
+        <div class="feature">
+          <h3>Self-Hostable</h3>
+          <p>Run it on your own hardware with local models — whisper.cpp, Ollama, Piper TTS. Zero API costs. Full privacy. Docker ready.</p>
+        </div>
       </div>
-    </form>
+    </section>
+
+    <!-- Upload form -->
+    <section class="upload-section" id="upload">
+      <h2>Try it</h2>
+      <form id="uploadForm" enctype="multipart/form-data">
+        <div class="panel">
+          <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="File upload area. Press Enter or Space to browse files.">
+            <p class="big">Drop your file here</p>
+            <p class="muted">or click to browse</p>
+            <p class="muted" style="font-size:0.8rem">Video: MP4, WebM, MOV &middot; Audio: MP3, WAV, OGG, M4A &middot; Max 500MB</p>
+            <input type="file" name="file" id="fileInput" accept="video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/mp4" style="display:none" required aria-required="true" />
+          </div>
+          <div class="file-info" id="fileInfo" style="display:none" aria-live="polite"></div>
+        </div>
+
+        <div class="upload-actions">
+          <button type="submit" class="btn" id="uploadBtn" disabled style="margin-top:0">Upload &amp; Continue</button>
+          <button type="button" class="btn-outline" id="sampleBtn" style="margin-top:0">Try with a sample</button>
+        </div>
+        <p class="error" id="error" style="display:none" aria-live="polite" role="alert"></p>
+        <span id="uploadStatus" aria-live="polite" style="position:absolute;left:-9999px"></span>
+
+        <div class="progress-bar" id="uploadProgress" style="display:none" aria-hidden="true">
+          <div class="fill" id="uploadFill"></div>
+        </div>
+        <p class="muted" style="font-size:0.8rem;margin-top:8px">Results are available for 24 hours, then automatically removed.</p>
+      </form>
+    </section>
   </main>
+
+  ${FOOTER_HTML}
 
   <script>
     const dropzone = document.getElementById('dropzone');
@@ -249,6 +422,24 @@ export const uiService = {
       fileInfo.style.display = 'block';
       uploadBtn.disabled = false;
       errorEl.style.display = 'none';
+    });
+
+    document.getElementById('sampleBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('sampleBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Loading sample\u2026';
+      errorEl.style.display = 'none';
+      try {
+        const res = await fetch('/v1/jobs/sample', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create sample job');
+        window.location.href = '/jobs/' + data.id + '/options';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Try with a sample';
+      }
     });
 
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
@@ -340,6 +531,7 @@ export const uiService = {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Options — Accessibility Lite</title>
+  ${OG_META}
   <style>${SHARED_STYLES}</style>
 </head>
 <body>
@@ -382,6 +574,7 @@ export const uiService = {
       </div>
 
       <button type="submit" class="btn" id="processBtn">Process Media</button>
+      <p class="muted" style="font-size:0.85rem;margin-top:8px">Estimated processing time: ~${Math.max(5, Math.round(job.duration_ms / 1000 * 0.6))} seconds</p>
       <p class="error" id="error" style="display:none" aria-live="polite" role="alert"></p>
 
       <div id="progressSection" style="display:none" aria-live="polite">
@@ -390,6 +583,7 @@ export const uiService = {
       </div>
     </form>
   </main>
+  ${FOOTER_HTML}
 
   <script>
     const jobId = ${JSON.stringify(job.id)};
@@ -442,7 +636,7 @@ export const uiService = {
             }
             if (data.type === 'error') {
               sse.close();
-              errorEl.textContent = data.message || 'Processing failed';
+              errorEl.innerHTML = (data.message || 'Processing failed') + ' <button onclick="window.location.reload()" style="margin-left:8px;padding:4px 12px;background:var(--accent);color:#07111f;border:0;border-radius:6px;cursor:pointer;font-weight:600">Retry</button>';
               errorEl.style.display = 'block';
               btn.disabled = false;
               btn.textContent = 'Process Media';
@@ -497,6 +691,7 @@ export const uiService = {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Results — Accessibility Lite</title>
+  ${OG_META}
   <style>${SHARED_STYLES}
     .dl-link {
       display: inline-block;
@@ -615,6 +810,7 @@ export const uiService = {
 
     <p><a href="/">&larr; Process another file</a></p>
   </main>
+  ${FOOTER_HTML}
 
   <script>
     document.getElementById('shareUrl').value = window.location.origin + '/player/${safeId}';
@@ -647,6 +843,7 @@ export const uiService = {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(job.original_filename)} — Accessibility Lite Player</title>
+  ${OG_META}
   <style>${SHARED_STYLES}
     .sign-overlay {
       --sign-bg: ${theme.background.color};
@@ -726,6 +923,7 @@ export const uiService = {
       </div>
     </div>
   </main>
+  ${FOOTER_HTML}
 
   <script>
     const allThemes = ${allThemes};

@@ -8,8 +8,29 @@ services:
       - MODEL_PROVIDER=mock
       - TRANSLATION_PROVIDER=mock
       - MAX_UPLOAD_MB=500
+      - ENABLE_POSTGRES=true
+      - DATABASE_URL=postgresql://alite:alite@postgres:5432/accessibility_lite
+      - SNAPSHOT_INTERVAL_MS=300000
     volumes:
       - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: alite
+      POSTGRES_PASSWORD: alite
+      POSTGRES_DB: accessibility_lite
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alite"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   uploads:
+  pgdata:

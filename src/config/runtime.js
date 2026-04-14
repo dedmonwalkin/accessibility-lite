@@ -15,6 +15,9 @@ export function runtimeConfig() {
     translationCacheTtlMs: Number(env.TRANSLATION_CACHE_TTL_MS || 3600000),
     translationCacheMaxSize: Number(env.TRANSLATION_CACHE_MAX_SIZE || 10000),
     apiKeys: env.API_KEYS ? env.API_KEYS.split(',').map(k => k.trim()).filter(Boolean) : [],
-    rateLimitRpm: Number(env.RATE_LIMIT_RPM || 60)
+    rateLimitRpm: Number(env.RATE_LIMIT_RPM || 60),
+    enablePostgres: (env.ENABLE_POSTGRES || 'false').toLowerCase() === 'true',
+    databaseUrl: env.DATABASE_URL || '',
+    snapshotIntervalMs: Number(env.SNAPSHOT_INTERVAL_MS || 300000)
   };
 }
