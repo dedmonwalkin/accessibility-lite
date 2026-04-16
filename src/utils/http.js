@@ -1,4 +1,5 @@
 import { URL } from 'node:url';
+import { runtimeConfig } from '../config/runtime.js';
 
 export function sendJson(res, statusCode, payload) {
   const body = JSON.stringify(payload);
@@ -18,11 +19,30 @@ export function sendHtml(res, statusCode, html) {
   res.end(body);
 }
 
-export async function parseJsonBody(req) {
-  const chunks = [];
-  for await (const chunk of req) {
-    chunks.push(chunk);
+export class PayloadTooLargeError extends Error {
+  constructor(limit) {
+    super(`Request body exceeds ${limit} bytes`);
+    this.statusCode = 413;
+    this.limit = limit;
   }
+}
+
+export async function parseJsonBody(req, { maxBytes } = {}) {
+  const limit = maxBytes ?? runtimeConfig().maxJsonBodyBytes;
+  const chunks = [];
+  let total = 0;
+  let overflowed = false;
+  for await (const chunk of req) {
+    total += chunk.length;
+    if (total > limit) {
+      overflowed = true;
+      // Drain the rest silently rather than destroy the socket — destroying
+      // here would prevent the handler from sending a 413 response cleanly.
+    } else if (!overflowed) {
+      chunks.push(chunk);
+    }
+  }
+  if (overflowed) throw new PayloadTooLargeError(limit);
   const raw = Buffer.concat(chunks).toString('utf8');
   if (!raw) return {};
   try {

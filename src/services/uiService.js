@@ -182,8 +182,63 @@ const SHARED_STYLES = `
   }
 `;
 
+// Minimal, dependency-free markdown subset: headings, paragraphs, code spans,
+// and links. Anything a policy page needs. Everything is escaped first, so
+// rendered output cannot introduce script vectors.
+function renderMarkdownLite(raw) {
+  const escaped = escapeHtml(raw);
+  const lines = escaped.split(/\r?\n/);
+  const out = [];
+  let inPara = false;
+  const close = () => { if (inPara) { out.push('</p>'); inPara = false; } };
+  for (const line of lines) {
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) {
+      close();
+      const lvl = h[1].length;
+      out.push(`<h${lvl}>${h[2]}</h${lvl}>`);
+      continue;
+    }
+    if (!line.trim()) { close(); continue; }
+    if (!inPara) { out.push('<p>'); inPara = true; } else { out.push(' '); }
+    const withInline = line
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\[([^\]]+)\]\(([^\s)]+)\)/g, '<a href="$2" rel="noopener">$1</a>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    out.push(withInline);
+  }
+  close();
+  return out.join('');
+}
+
 export const uiService = {
   escapeHtml,
+
+  buildDocPage(title, markdown) {
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(title)} — Accessibility Lite</title>
+  ${OG_META}
+  <style>${SHARED_STYLES}
+    article { max-width: 720px; }
+    article h1, article h2, article h3 { margin-top: 24px; }
+    article p { line-height: 1.6; color: var(--text); }
+    article a { color: var(--accent); }
+    article code { background: #0b1b30; padding: 1px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <p><a href="/" style="color:var(--accent);text-decoration:none">&larr; Home</a></p>
+    <article>${renderMarkdownLite(markdown)}</article>
+  </main>
+  ${FOOTER_HTML}
+</body>
+</html>`;
+  },
 
   buildErrorPage(statusCode, title, message, { autoRefresh = 0 } = {}) {
     const refreshTag = autoRefresh > 0 ? `<meta http-equiv="refresh" content="${autoRefresh}">` : '';

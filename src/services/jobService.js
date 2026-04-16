@@ -15,6 +15,13 @@ import {
 } from '../config/accessibilityCatalog.js';
 
 const UPLOADS_DIR = path.resolve('uploads');
+const JOB_ID_RE = /^job_[0-9a-f-]{36}$/;
+
+export function isValidJobId(id) {
+  return typeof id === 'string' && JOB_ID_RE.test(id);
+}
+
+export function getUploadsDir() { return UPLOADS_DIR; }
 
 function normalizeList(input, allowed, fallback) {
   const values = Array.isArray(input) ? input : (input ? [input] : []);
@@ -32,7 +39,16 @@ export const jobService = {
     const jobDir = path.join(UPLOADS_DIR, jobId);
     await fs.promises.mkdir(jobDir, { recursive: true });
 
-    const { fileInfo, fields } = await parseUpload(req, jobDir);
+    let fileInfo, fields;
+    try {
+      ({ fileInfo, fields } = await parseUpload(req, jobDir));
+    } catch (err) {
+      // Upload failed — remove the orphan job dir so a simple error loop
+      // cannot fill the disk.
+      await fs.promises.rm(jobDir, { recursive: true, force: true }).catch(() => {});
+      store.log('job.upload_failed', { jobId, error: err.message });
+      throw err;
+    }
 
     let probeResult = { duration_ms: 0, has_video: false, has_audio: false, format: 'unknown', codec: 'unknown' };
     try {

@@ -1,3 +1,7 @@
+# Local-development compose file. The default Postgres password below is
+# "alite" — acceptable for localhost, unsafe for any networked deployment.
+# For production, provide secrets via an env file (see .env.example) or a
+# secret manager.
 services:
   app:
     build: .
@@ -9,8 +13,10 @@ services:
       - TRANSLATION_PROVIDER=mock
       - MAX_UPLOAD_MB=500
       - ENABLE_POSTGRES=true
-      - DATABASE_URL=postgresql://alite:alite@postgres:5432/accessibility_lite
+      - DATABASE_URL=postgresql://alite:${POSTGRES_PASSWORD:-alite}@postgres:5432/accessibility_lite
       - SNAPSHOT_INTERVAL_MS=300000
+      # Development-only: open endpoints without API keys. Do NOT use in production.
+      - AUTH_DISABLED=true
     volumes:
       - uploads:/app/uploads
     depends_on:
@@ -21,7 +27,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: alite
-      POSTGRES_PASSWORD: alite
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-alite}
       POSTGRES_DB: accessibility_lite
     volumes:
       - pgdata:/var/lib/postgresql/data

@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import path from 'node:path';
 import { store } from '../data/store.js';
 import { createModelProvider } from './providers/modelProvider.js';
 import { createTranslationProvider } from './providers/translationProvider.js';
@@ -8,7 +9,21 @@ import { runtimeConfig } from '../config/runtime.js';
 export const jobEmitter = new EventEmitter();
 jobEmitter.setMaxListeners(100);
 
-const translationProvider = createTranslationProvider();
+// Translation provider is lazily constructed so runtime config (including
+// explicit fallback policy) is read at job time, not at module import.
+let _translationProvider = null;
+function getTranslationProvider() {
+  if (!_translationProvider) _translationProvider = createTranslationProvider();
+  return _translationProvider;
+}
+
+class JobCancelledError extends Error {
+  constructor(jobId) { super(`Job ${jobId} was cancelled`); this.name = 'JobCancelledError'; }
+}
+
+function assertJobAlive(jobId) {
+  if (!store.jobs.has(jobId)) throw new JobCancelledError(jobId);
+}
 
 function toCaptionSegment(event) {
   return {
@@ -52,13 +67,14 @@ function buildSignCards(signScript = []) {
 }
 
 async function buildCaptionTranslations(captions, outputLanguages) {
+  const provider = getTranslationProvider();
   const map = {};
   await Promise.all(
     outputLanguages.map(async (language) => {
       map[language] = await Promise.all(
         captions.map(async (segment) => ({
           ...segment,
-          text: await translationProvider.translate(segment.text, language)
+          text: await provider.translate(segment.text, language)
         }))
       );
     })
@@ -81,7 +97,10 @@ export async function runJobPipeline(jobId) {
 
     emitProgress(jobId, 0, 'Extracting audio...');
 
-    const audioPath = job.file_path.replace(/\.[^.]+$/, '.wav');
+    // Derive the WAV output path inside the job's own directory rather than
+    // by regex-rewriting job.file_path — defense in depth against a poisoned
+    // file_path (e.g. from a tampered snapshot) overwriting unrelated files.
+    const audioPath = path.join(path.dirname(job.file_path), 'audio.wav');
     if (job.has_audio) {
       await mediaService.extractAudio(job.file_path, audioPath);
     } else {
@@ -89,6 +108,7 @@ export async function runJobPipeline(jobId) {
     }
 
     emitProgress(jobId, 5, 'Splitting audio into chunks...');
+    assertJobAlive(jobId);
 
     const chunks = await mediaService.chunkAudio(audioPath, config.chunkDurationMs);
     const totalChunks = chunks.length;
@@ -98,6 +118,7 @@ export async function runJobPipeline(jobId) {
     const signScript = [];
 
     for (let i = 0; i < totalChunks; i++) {
+      assertJobAlive(jobId);
       const chunk = chunks[i];
       const audio_base64 = await mediaService.readAsBase64(chunk.path);
 
@@ -164,9 +185,15 @@ export async function runJobPipeline(jobId) {
 
     store.log('job.completed', { jobId, segments: captions.length });
   } catch (err) {
-    job.status = 'error';
-    job.error = err.message;
-    job.updatedAt = store.nowIso();
+    if (err instanceof JobCancelledError) {
+      store.log('job.cancelled', { jobId });
+      return;
+    }
+    if (job) {
+      job.status = 'error';
+      job.error = err.message;
+      job.updatedAt = store.nowIso();
+    }
 
     emitProgress(jobId, -1, err.message);
     jobEmitter.emit(`job:${jobId}`, { type: 'error', job_id: jobId, message: err.message });

@@ -1,5 +1,6 @@
 import { store } from '../../data/store.js';
 import { exportState, importState } from './stateSerializer.js';
+import { runtimeConfig } from '../../config/runtime.js';
 
 export class PostgresPersistence {
   constructor({ databaseUrl }) {
@@ -66,6 +67,25 @@ export class PostgresPersistence {
 
     const row = result.rows[0];
     store.log('persistence.postgres.snapshot', { snapshotId: row.id, reason });
+
+    // Prune old snapshots so the JSONB table doesn't grow forever. Default
+    // is keep last 20; configurable via SNAPSHOT_RETENTION. 0 disables prune.
+    const retention = runtimeConfig().snapshotRetention;
+    if (retention > 0) {
+      try {
+        const pruned = await this.client.query(
+          'DELETE FROM app_state_snapshots WHERE id NOT IN (SELECT id FROM app_state_snapshots ORDER BY id DESC LIMIT $1)',
+          [retention]
+        );
+        if (pruned.rowCount > 0) {
+          store.log('persistence.postgres.pruned', { deleted: pruned.rowCount, retention });
+        }
+      } catch (err) {
+        // Prune failures are non-fatal — snapshot already saved.
+        store.log('persistence.postgres.prune_failed', { error: err.message });
+      }
+    }
+
     return { saved: true, snapshotId: row.id, createdAt: row.created_at, reason };
   }
 
