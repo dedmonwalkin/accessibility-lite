@@ -1,29 +1,32 @@
 # Accessibility Lite
 
-Open source accessibility pipeline. Upload any video or audio file and get **captions**, **AI audio descriptions**, and **sign language overlays** — all from a single tool.
+Open-source media accessibility pipeline. Upload a video or audio file and get **captions in 21 languages** plus **AI-drafted audio descriptions** that a human reviewer can polish before shipping.
+
+Self-hostable. MIT-licensed. Works offline with local models.
 
 ## Why this exists
 
-> She had nothing she could do anymore. She couldn't drive, she couldn't read. But she would still try to watch as much TV as she could, because that was her habit.
+Captioning at compliance quality is expensive and locked to proprietary vendors. Audio description is worse — it barely exists in automated form, and what exists is trapped inside closed platforms. Public-sector buyers in the EU cannot legally send media to US SaaS for processing, so they end up with no accessibility at all.
 
-Captions exist in some tools. Audio descriptions barely exist in automated form. Nobody bundles all three accessibility modalities in a single open source pipeline. This project does.
+Accessibility Lite is a single, self-hostable pipeline that covers the parts of [WCAG 2.2 Level A/AA](https://www.w3.org/TR/WCAG22/), [EN 301 549](https://www.etsi.org/deliver/etsi_en/301500_301599/301549/), and the [European Accessibility Act](https://eur-lex.europa.eu/eli/dir/2019/882/oj) (enforceable 28 June 2025) that automation can realistically help with: **captions and audio-description drafts**.
 
 ## What you get
 
-- **Captions** — AI-powered transcription in WebVTT and TTML. Standard, simplified, or verbatim styles. 21 output languages.
-- **Audio Descriptions** — AI-generated narration of visual content during dialogue gaps.
-- **Sign Language** — Gloss tokens and sign cards for 10 sign languages (ASL, BSL, LSF, ISL, JSL, DGS, AUSLAN, LIBRAS, NZSL, HKSL). 6 overlay themes including high contrast and kid-friendly modes.
-- **Shareable Player** — Each processed file gets a player page with live captions, sign overlays, and audio descriptions. Share the link with anyone.
+- **Captions** — AI-powered transcription to [WebVTT](https://www.w3.org/TR/webvtt1/) and [TTML2](https://www.w3.org/TR/ttml2/). Standard, simplified, or verbatim styles. 21 output languages.
+- **AD Draft Assist** — AI-generated *first-draft* narration of visual content during dialogue gaps. **Requires human review before publication.** See [LIMITATIONS.md](LIMITATIONS.md).
+- **Shareable Player** — Each processed file gets a player page with live captions and audio descriptions. Share the link with anyone.
+
+> [!IMPORTANT]
+> Outputs from AI models are drafts, not finished accessibility products. Read [LIMITATIONS.md](LIMITATIONS.md) before using outputs in compliance-bound workflows.
 
 ## Quick start
 
 ```bash
-# Clone and install
 git clone https://github.com/dedmonwalkin/accessibility-lite.git
 cd accessibility-lite
 npm install
 
-# Start (uses mock AI providers — no API keys needed)
+# Mock providers — no API keys, no external calls. Demo only.
 npm start
 # Open http://localhost:3000
 ```
@@ -43,11 +46,14 @@ docker run -p 3000:3000 accessibility-lite
 
 Run the full pipeline locally with zero API costs:
 
-| Component | Tool | Cost |
-|-----------|------|------|
-| Transcription | [whisper.cpp](https://github.com/ggerganov/whisper.cpp) server mode | Free |
-| Vision / Descriptions | [Ollama](https://ollama.ai) + Gemma or LLaVA | Free |
-| Translation | [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate) | Free |
+| Component | Tool | License | Cost |
+|-----------|------|---------|------|
+| Transcription | [whisper.cpp](https://github.com/ggerganov/whisper.cpp) server mode | MIT | Free |
+| Vision / descriptions | [Ollama](https://ollama.ai) + Gemma or LLaVA | Apache 2.0 / Llama Community | Free |
+| Translation | [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate) | **AGPL-3.0** — see note | Free |
+
+> [!WARNING]
+> LibreTranslate is AGPL-3.0. If you expose it over a network as part of a hosted service you offer to others, AGPL obligations attach to the combined work. For a managed SaaS, prefer DeepL or an in-house translation shim. For private self-hosting or internal use, AGPL is usually not a practical issue — but confirm with your counsel.
 
 Configure via environment variables:
 
@@ -67,15 +73,21 @@ TRANSLATION_HTTP_BASE_URL=http://localhost:5000
 | `MODEL_HTTP_BASE_URL` | — | URL of model inference server |
 | `MODEL_HTTP_API_KEY` | — | Bearer token for model server |
 | `MODEL_HTTP_TIMEOUT_MS` | `4000` | Model request timeout |
+| `MODEL_FALLBACK_ON_ERROR` | `false` | If `true`, silent fallback to mock on provider failure. **Never enable in production.** |
 | `TRANSLATION_PROVIDER` | `mock` | `mock`, `libretranslate`, or `deepl` |
 | `TRANSLATION_HTTP_BASE_URL` | — | LibreTranslate URL |
 | `TRANSLATION_API_KEY` | — | DeepL or LibreTranslate key |
-| `API_KEYS` | — | Comma-separated auth tokens (empty = public) |
+| `API_KEYS` | — | Comma-separated auth tokens. **Empty requires `AUTH_DISABLED=true`.** |
+| `AUTH_DISABLED` | `false` | Must be `true` to run without API keys. |
+| `TRUSTED_PROXY` | `false` | Set `true` only when behind a trusted reverse proxy; enables `X-Forwarded-For` parsing. |
 | `RATE_LIMIT_RPM` | `60` | Requests per minute per IP (0 = disabled) |
 | `MAX_UPLOAD_MB` | `500` | Max upload file size |
+| `MAX_JSON_BODY_BYTES` | `1048576` | Max JSON request body (1 MB) |
 | `ENABLE_POSTGRES` | `false` | Enable Postgres persistence |
 | `DATABASE_URL` | — | Postgres connection string |
 | `SNAPSHOT_INTERVAL_MS` | `300000` | Auto-snapshot interval (5 min) |
+| `SNAPSHOT_RETENTION` | `20` | Keep last N snapshots (0 = keep all, not recommended) |
+| `HTTP_PROVIDER_MAX_RESPONSE_BYTES` | `10485760` | Response cap for model/translation HTTP calls (10 MB) |
 
 ## Architecture
 
@@ -83,7 +95,7 @@ TRANSLATION_HTTP_BASE_URL=http://localhost:5000
 src/
   server.js                          — HTTP server, auth, rate limiting, SSE
   config/
-    runtime.js                       — Environment variable config
+    runtime.js                       — Env config, fail-fast validation
     accessibilityCatalog.js          — Supported languages, styles, themes
   data/
     store.js                         — In-memory state (Maps + audit log)
@@ -97,11 +109,11 @@ src/
     providers/
       modelProvider.js               — Factory: mock | http
       mockModelProvider.js           — Mock transcription and inference
-      httpModelProvider.js           — HTTP model gateway with fallback
+      httpModelProvider.js           — HTTP model gateway (SSRF-guarded, response-capped)
       translationProvider.js         — Factory: mock | libretranslate | deepl (with cache)
     persistence/
       persistenceService.js          — Noop/Postgres adapter with retry
-      postgresPersistence.js         — JSONB snapshot table
+      postgresPersistence.js         — JSONB snapshot table (with retention)
       stateSerializer.js             — Export/import all Maps
 ```
 
@@ -119,21 +131,23 @@ src/
 | `GET` | `/v1/jobs/:id/progress` | SSE progress stream |
 | `GET` | `/v1/jobs/:id/captions.vtt` | Download WebVTT captions |
 | `GET` | `/v1/jobs/:id/captions.ttml` | Download TTML captions |
-| `GET` | `/v1/jobs/:id/audio-description.json` | Download audio descriptions |
-| `GET` | `/v1/jobs/:id/sign-data.json` | Download sign language data |
+| `GET` | `/v1/jobs/:id/audio-description.json` | Download audio-description draft |
 | `GET` | `/v1/jobs/:id/media` | Stream original media (range requests supported) |
 | `GET` | `/jobs/:id/options` | Options page (HTML) |
 | `GET` | `/jobs/:id/results` | Results page (HTML) |
 | `GET` | `/player/:id` | Shareable player page |
+| `GET` | `/cookies` | Cookie policy |
+| `GET` | `/privacy` | Privacy notice |
 
 ## How processing works
 
 1. Upload a video or audio file
-2. Audio is extracted to WAV (16kHz mono) via ffmpeg
-3. Audio is split into chunks (5 seconds by default)
-4. Each chunk is transcribed, then run through perception, accessibility, and sign inference
-5. Captions are translated to all selected output languages
-6. Results are assembled and available via download links or the player page
+2. The file is validated against allowed MIME types **and** its first-bytes magic number
+3. Audio is extracted to WAV (16 kHz mono) via ffmpeg
+4. Audio is split into chunks (5 seconds by default)
+5. Each chunk is transcribed, then run through perception and accessibility inference
+6. Captions are translated to selected output languages
+7. Results are assembled and available via download links or the player page
 
 ## Persistence
 
@@ -151,11 +165,23 @@ The app automatically snapshots state to Postgres on:
 - Every 5 minutes (configurable)
 - Graceful shutdown
 
-On startup, the latest snapshot is loaded automatically.
+On startup, the latest snapshot is loaded automatically. Old snapshots beyond `SNAPSHOT_RETENTION` are pruned.
 
 ## Job expiry
 
-Jobs and their uploaded files are automatically removed after 24 hours. The cleanup runs hourly and on startup.
+Jobs and their uploaded files are automatically removed after 24 hours. The cleanup runs hourly, on startup, and sweeps orphan directories left behind by failed uploads.
+
+## Privacy & cookies
+
+This service sets a minimal set of strictly-necessary cookies only (no tracking, no third-party analytics by default). See [COOKIES.md](COOKIES.md) and [PRIVACY.md](PRIVACY.md).
+
+## Limitations
+
+AI outputs from this pipeline are drafts, not finished accessibility products. Read [LIMITATIONS.md](LIMITATIONS.md) before relying on outputs for legal compliance or for blind / Deaf / hard-of-hearing audiences.
+
+## Security
+
+Report vulnerabilities via [SECURITY.md](SECURITY.md).
 
 ## Tests
 
@@ -163,12 +189,10 @@ Jobs and their uploaded files are automatically removed after 24 hours. The clea
 npm test
 ```
 
-69+ tests covering providers, pipeline, UI generation, auth, rate limiting, and HTML escaping.
-
 ## License
 
 MIT
 
 ## Built by
 
-[Isabella & Tan](https://github.com/dedmonwalkin)
+[Isabella & Tan](https://github.com/dedmonwalkin) — with thanks to an audience of one whose evening TV habit reminded us this work matters.

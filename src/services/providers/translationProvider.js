@@ -1,12 +1,8 @@
 import { runtimeConfig } from '../../config/runtime.js';
+import { safeFetchJson, SsrfError } from '../../utils/safeFetch.js';
+import { store } from '../../data/store.js';
 
 const DEFAULT_TIMEOUT_MS = Number(process.env.TRANSLATION_HTTP_TIMEOUT_MS || 5000);
-
-function withTimeout(timeoutMs) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  return { signal: controller.signal, clear: () => clearTimeout(timer) };
-}
 
 function createBoundedCache() {
   const rt = runtimeConfig();
@@ -39,9 +35,19 @@ const mockTranslationProvider = {
   }
 };
 
+function fallbackText(targetLanguage, text) { return `[${targetLanguage}] ${text}`; }
+
+function isLocalhostHost(urlStr) {
+  try { const u = new URL(urlStr); return u.hostname === 'localhost' || u.hostname === '127.0.0.1' || u.hostname === '::1'; }
+  catch { return false; }
+}
+
 function createLibreTranslateProvider({ baseUrl, apiKey }) {
   const cache = createBoundedCache();
   const url = `${baseUrl.replace(/\/$/, '')}/translate`;
+  const allowHttpLocalhost = isLocalhostHost(baseUrl);
+  const runtime = runtimeConfig();
+  const maxResponseBytes = runtime.httpProviderMaxResponseBytes;
 
   return {
     name: 'libretranslate',
@@ -54,23 +60,32 @@ function createLibreTranslateProvider({ baseUrl, apiKey }) {
       const cached = cache.get(cacheKey);
       if (cached !== undefined) return cached;
 
-      const t = withTimeout(DEFAULT_TIMEOUT_MS);
       try {
         const body = { q: text, source, target, format: 'text' };
         if (apiKey) body.api_key = apiKey;
-        const res = await fetch(url, {
+        const data = await safeFetchJson(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
-          signal: t.signal
+          timeoutMs: DEFAULT_TIMEOUT_MS,
+          maxResponseBytes,
+          allowHttpLocalhost
         });
-        if (!res.ok) throw new Error(`LibreTranslate error: ${res.status}`);
-        const data = await res.json();
         const result = data.translatedText || text;
         cache.set(cacheKey, result);
         return result;
-      } catch { return `[${targetLanguage}] ${text}`; }
-      finally { t.clear(); }
+      } catch (err) {
+        if (err instanceof SsrfError) {
+          store.log('provider.ssrf_blocked', { provider: 'libretranslate', error: err.message });
+          throw err;
+        }
+        store.log('provider.error', { provider: 'libretranslate', error: err.message });
+        if (runtime.modelFallbackOnError) {
+          store.log('provider.fallback', { from: 'libretranslate', to: 'passthrough' });
+          return fallbackText(targetLanguage, text);
+        }
+        throw err;
+      }
     }
   };
 }
@@ -78,6 +93,8 @@ function createLibreTranslateProvider({ baseUrl, apiKey }) {
 function createDeeplProvider({ apiKey, baseUrl }) {
   const cache = createBoundedCache();
   const apiUrl = `${(baseUrl || 'https://api-free.deepl.com').replace(/\/$/, '')}/v2/translate`;
+  const runtime = runtimeConfig();
+  const maxResponseBytes = runtime.httpProviderMaxResponseBytes;
 
   return {
     name: 'deepl',
@@ -89,21 +106,29 @@ function createDeeplProvider({ apiKey, baseUrl }) {
       const cached = cache.get(cacheKey);
       if (cached !== undefined) return cached;
 
-      const t = withTimeout(DEFAULT_TIMEOUT_MS);
       try {
-        const res = await fetch(apiUrl, {
+        const data = await safeFetchJson(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `DeepL-Auth-Key ${apiKey}` },
           body: JSON.stringify({ text: [text], target_lang: target }),
-          signal: t.signal
+          timeoutMs: DEFAULT_TIMEOUT_MS,
+          maxResponseBytes
         });
-        if (!res.ok) throw new Error(`DeepL error: ${res.status}`);
-        const data = await res.json();
         const result = data.translations?.[0]?.text || text;
         cache.set(cacheKey, result);
         return result;
-      } catch { return `[${targetLanguage}] ${text}`; }
-      finally { t.clear(); }
+      } catch (err) {
+        if (err instanceof SsrfError) {
+          store.log('provider.ssrf_blocked', { provider: 'deepl', error: err.message });
+          throw err;
+        }
+        store.log('provider.error', { provider: 'deepl', error: err.message });
+        if (runtime.modelFallbackOnError) {
+          store.log('provider.fallback', { from: 'deepl', to: 'passthrough' });
+          return fallbackText(targetLanguage, text);
+        }
+        throw err;
+      }
     }
   };
 }

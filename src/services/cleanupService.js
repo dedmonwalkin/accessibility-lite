@@ -14,7 +14,6 @@ export const cleanupService = {
       const createdAt = new Date(job.createdAt).getTime();
       if (now - createdAt < ttlMs) continue;
 
-      // Remove upload files
       const jobDir = path.join(UPLOADS_DIR, jobId);
       try {
         fs.rmSync(jobDir, { recursive: true, force: true });
@@ -27,10 +26,34 @@ export const cleanupService = {
       removed++;
     }
 
-    if (removed > 0) {
-      store.log('cleanup.expired', { removed, ttlMs });
+    const orphans = this.sweepOrphanDirs(ttlMs);
+
+    if (removed > 0 || orphans > 0) {
+      store.log('cleanup.expired', { removed, orphans, ttlMs });
     }
 
-    return { removed };
+    return { removed, orphans };
+  },
+
+  // Directories left behind by failed uploads (no matching job record) and older
+  // than the TTL. Without this, a simple error loop can fill the disk.
+  sweepOrphanDirs(ttlMs = DEFAULT_TTL_MS) {
+    let swept = 0;
+    let entries;
+    try { entries = fs.readdirSync(UPLOADS_DIR, { withFileTypes: true }); }
+    catch { return 0; }
+
+    const now = Date.now();
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (store.jobs.has(entry.name)) continue;
+      const p = path.join(UPLOADS_DIR, entry.name);
+      let stat;
+      try { stat = fs.statSync(p); } catch { continue; }
+      if (now - stat.mtimeMs < ttlMs) continue;
+      try { fs.rmSync(p, { recursive: true, force: true }); swept++; }
+      catch { /* noop */ }
+    }
+    return swept;
   }
 };
