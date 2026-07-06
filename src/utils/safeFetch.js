@@ -45,9 +45,12 @@ export class SsrfError extends Error {
 /**
  * Resolve a URL's hostname and refuse private / loopback / metadata IPs.
  * Accepts http:// for localhost only; all other hosts must be https.
+ * `allowPrivateNetwork` skips both checks — only for explicitly operator-
+ * configured internal services (e.g. the model gateway on a docker network),
+ * never for URLs derived from user input.
  * Returns the validated URL string on success.
  */
-export async function assertSafeUrl(rawUrl, { allowHttpLocalhost = false } = {}) {
+export async function assertSafeUrl(rawUrl, { allowHttpLocalhost = false, allowPrivateNetwork = false } = {}) {
   let parsed;
   try { parsed = new URL(rawUrl); }
   catch { throw new SsrfError(`Invalid URL: ${rawUrl}`); }
@@ -59,13 +62,13 @@ export async function assertSafeUrl(rawUrl, { allowHttpLocalhost = false } = {})
   const host = parsed.hostname;
   const isLocalhostName = host === 'localhost' || host === 'localhost.localdomain';
 
-  if (parsed.protocol === 'http:' && !(allowHttpLocalhost && isLocalhostName)) {
+  if (parsed.protocol === 'http:' && !allowPrivateNetwork && !(allowHttpLocalhost && isLocalhostName)) {
     throw new SsrfError(`Refusing plain http to non-localhost host: ${host}`);
   }
 
   // Literal IP case
   if (net.isIP(host)) {
-    if (isPrivate(host) && !allowHttpLocalhost) {
+    if (isPrivate(host) && !allowHttpLocalhost && !allowPrivateNetwork) {
       throw new SsrfError(`Refusing request to private/loopback IP: ${host}`);
     }
     return parsed.toString();
@@ -76,7 +79,7 @@ export async function assertSafeUrl(rawUrl, { allowHttpLocalhost = false } = {})
   const addrs = await dns.lookup(host, { all: true, verbatim: true });
   if (!addrs.length) throw new SsrfError(`DNS lookup returned no addresses for: ${host}`);
   for (const { address } of addrs) {
-    if (isPrivate(address) && !(allowHttpLocalhost && isLocalhostName)) {
+    if (isPrivate(address) && !allowPrivateNetwork && !(allowHttpLocalhost && isLocalhostName)) {
       throw new SsrfError(`Hostname ${host} resolves to private/loopback IP: ${address}`);
     }
   }
@@ -87,8 +90,8 @@ export async function assertSafeUrl(rawUrl, { allowHttpLocalhost = false } = {})
  * Fetch wrapper that (1) validates URL against SSRF rules, (2) caps response
  * body by byte count, (3) enforces a hard timeout. Returns parsed JSON.
  */
-export async function safeFetchJson(url, { method = 'GET', headers = {}, body, timeoutMs = 5000, maxResponseBytes = 10 * 1024 * 1024, allowHttpLocalhost = false } = {}) {
-  await assertSafeUrl(url, { allowHttpLocalhost });
+export async function safeFetchJson(url, { method = 'GET', headers = {}, body, timeoutMs = 5000, maxResponseBytes = 10 * 1024 * 1024, allowHttpLocalhost = false, allowPrivateNetwork = false } = {}) {
+  await assertSafeUrl(url, { allowHttpLocalhost, allowPrivateNetwork });
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

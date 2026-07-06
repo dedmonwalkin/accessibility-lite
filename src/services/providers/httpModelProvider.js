@@ -55,7 +55,8 @@ export function createHttpModelProvider(config = {}) {
         body: JSON.stringify(payload),
         timeoutMs,
         maxResponseBytes,
-        allowHttpLocalhost
+        allowHttpLocalhost,
+        allowPrivateNetwork: runtime.modelHttpAllowPrivate
       });
     } catch (err) {
       if (err instanceof SsrfError) {
