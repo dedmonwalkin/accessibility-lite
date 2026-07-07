@@ -11,6 +11,7 @@ import { uiService } from './services/uiService.js';
 import { persistenceService } from './services/persistence/persistenceService.js';
 import { cleanupService } from './services/cleanupService.js';
 import { sampleService } from './services/sampleService.js';
+import { ingestService, IngestError } from './services/ingestService.js';
 import {
   SUPPORTED_OUTPUT_LANGUAGES,
   SUPPORTED_SIGN_LANGUAGES,
@@ -263,6 +264,19 @@ async function handleRequest(req, res) {
     if (pathname === '/v1/jobs' && method === 'POST') {
       const job = await jobService.createJob(req);
       return sendJson(res, 201, job);
+    }
+
+    // Create job from URL (direct media link, or yt-dlp platform URL).
+    // Returns 202 with status "downloading"; poll GET /v1/jobs/:id.
+    if (pathname === '/v1/jobs/from-url' && method === 'POST') {
+      const body = await parseJsonBody(req);
+      try {
+        const job = await ingestService.createUrlJob(body.url);
+        return sendJson(res, 202, job);
+      } catch (err) {
+        if (err instanceof IngestError) return sendJson(res, err.statusCode, { error: err.message });
+        throw err;
+      }
     }
 
     // Job status

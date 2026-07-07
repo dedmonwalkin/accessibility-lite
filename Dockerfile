@@ -3,7 +3,9 @@
 # Floating tags are accepted here during development only.
 FROM node:20-alpine
 
-RUN apk add --no-cache ffmpeg tini
+# yt-dlp enables URL ingestion from platforms (YouTube, Granicus, ...);
+# direct media links work without it.
+RUN apk add --no-cache ffmpeg tini yt-dlp
 
 WORKDIR /app
 

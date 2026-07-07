@@ -444,6 +444,18 @@ export const uiService = {
         </div>
         <p class="muted" style="font-size:0.8rem;margin-top:8px">Results are available for 24 hours, then automatically removed.</p>
       </form>
+
+      <form id="urlForm" style="margin-top:24px" aria-label="Ingest from URL">
+        <label for="urlInput" style="display:block;margin-bottom:8px;font-weight:600">Or paste a video URL</label>
+        <p class="muted" style="font-size:0.85rem;margin-top:0">Direct media links (.mp4, .mp3, .wav, ...) or a public video page (YouTube and similar, when the server has yt-dlp installed).</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="url" id="urlInput" name="url" placeholder="https://example.gov/meetings/2026-06-02.mp4"
+                 style="flex:1;min-width:240px;padding:10px;border:1px solid var(--border, #ccc);border-radius:6px"
+                 aria-describedby="urlStatus" />
+          <button type="submit" class="btn" id="urlBtn" disabled>Fetch</button>
+        </div>
+        <span id="urlStatus" role="status" aria-live="polite" class="muted" style="display:block;margin-top:8px;font-size:0.85rem"></span>
+      </form>
     </section>
   </main>
 
@@ -539,6 +551,50 @@ export const uiService = {
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';
         uploadBtn.disabled = false;
+      }
+    });
+
+    const urlForm = document.getElementById('urlForm');
+    const urlInput = document.getElementById('urlInput');
+    const urlBtn = document.getElementById('urlBtn');
+    const urlStatus = document.getElementById('urlStatus');
+
+    urlInput.addEventListener('input', () => { urlBtn.disabled = !urlInput.value.trim(); });
+
+    async function pollUntilReady(jobId) {
+      for (;;) {
+        const res = await fetch('/v1/jobs/' + jobId);
+        const job = await res.json();
+        if (!res.ok) throw new Error(job.error || 'Job lookup failed');
+        if (job.status === 'error') throw new Error(job.error || 'Download failed');
+        if (job.status !== 'downloading') return job;
+        urlStatus.textContent = 'Downloading…';
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    }
+
+    urlForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      urlBtn.disabled = true;
+      urlBtn.innerHTML = '<span class="spinner"></span> Fetching…';
+      errorEl.style.display = 'none';
+      urlStatus.textContent = 'Requesting…';
+      try {
+        const res = await fetch('/v1/jobs/from-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: urlInput.value.trim() })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Ingest failed');
+        const job = await pollUntilReady(data.id);
+        window.location.href = '/jobs/' + job.id + '/options';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+        urlStatus.textContent = '';
+        urlBtn.disabled = false;
+        urlBtn.textContent = 'Fetch';
       }
     });
   </script>

@@ -95,7 +95,9 @@ TRANSLATION_HTTP_BASE_URL=http://localhost:5000
 | `AUTH_DISABLED` | `false` | Must be `true` to run without API keys. |
 | `TRUSTED_PROXY` | `false` | Set `true` only when behind a trusted reverse proxy; enables `X-Forwarded-For` parsing. |
 | `RATE_LIMIT_RPM` | `60` | Requests per minute per IP (0 = disabled) |
-| `MAX_UPLOAD_MB` | `500` | Max upload file size |
+| `MAX_UPLOAD_MB` | `500` | Max upload file size (also caps URL ingestion) |
+| `INGEST_TIMEOUT_MS` | `900000` | URL ingestion download timeout (15 min) |
+| `YTDLP_BIN` | `yt-dlp` | Path to yt-dlp for platform-URL ingestion |
 | `MAX_JSON_BODY_BYTES` | `1048576` | Max JSON request body (1 MB) |
 | `ENABLE_POSTGRES` | `false` | Enable Postgres persistence |
 | `DATABASE_URL` | — | Postgres connection string |
