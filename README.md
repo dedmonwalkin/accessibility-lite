@@ -55,7 +55,20 @@ Run the full pipeline locally with zero API costs:
 > [!WARNING]
 > LibreTranslate is AGPL-3.0. If you expose it over a network as part of a hosted service you offer to others, AGPL obligations attach to the combined work. For a managed SaaS, prefer DeepL or an in-house translation shim. For private self-hosting or internal use, AGPL is usually not a practical issue — but confirm with your counsel.
 
-Configure via environment variables:
+This repo ships a ready-made inference server: the
+[model gateway](model-gateway/README.md) runs Whisper locally (whisper.cpp or
+the Python CLI) or via the OpenAI API, behind the HTTP contract the app
+already speaks.
+
+```bash
+# Terminal 1 — real local transcription
+WHISPER_BACKEND=python-whisper npm run start:gateway
+
+# Terminal 2 — the app
+MODEL_PROVIDER=http MODEL_HTTP_BASE_URL=http://localhost:4011 npm start
+```
+
+Or configure any compatible inference server via environment variables:
 
 ```bash
 MODEL_PROVIDER=http
@@ -72,7 +85,8 @@ TRANSLATION_HTTP_BASE_URL=http://localhost:5000
 | `MODEL_PROVIDER` | `mock` | `mock` or `http` |
 | `MODEL_HTTP_BASE_URL` | — | URL of model inference server |
 | `MODEL_HTTP_API_KEY` | — | Bearer token for model server |
-| `MODEL_HTTP_TIMEOUT_MS` | `4000` | Model request timeout |
+| `MODEL_HTTP_TIMEOUT_MS` | `4000` | Model request timeout (raise to `120000` for real transcription) |
+| `MODEL_HTTP_ALLOW_PRIVATE` | `false` | Allow `MODEL_HTTP_BASE_URL` on a private network (e.g. docker-compose gateway). Applies only to the operator-configured gateway URL. |
 | `MODEL_FALLBACK_ON_ERROR` | `false` | If `true`, silent fallback to mock on provider failure. **Never enable in production.** |
 | `TRANSLATION_PROVIDER` | `mock` | `mock`, `libretranslate`, or `deepl` |
 | `TRANSLATION_HTTP_BASE_URL` | — | LibreTranslate URL |

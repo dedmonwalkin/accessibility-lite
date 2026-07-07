@@ -9,7 +9,13 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
-      - MODEL_PROVIDER=mock
+      # Real transcription via the whisper.cpp gateway service below.
+      - MODEL_PROVIDER=http
+      - MODEL_HTTP_BASE_URL=http://model-gateway:4011
+      # The gateway lives on the compose-internal network (a private IP);
+      # this flag scopes the SSRF exception to MODEL_HTTP_BASE_URL only.
+      - MODEL_HTTP_ALLOW_PRIVATE=true
+      - MODEL_HTTP_TIMEOUT_MS=120000
       - TRANSLATION_PROVIDER=mock
       - MAX_UPLOAD_MB=500
       - ENABLE_POSTGRES=true
@@ -22,6 +28,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      model-gateway:
+        condition: service_started
+
+  model-gateway:
+    build: ./model-gateway
+    # No host port mapping: reachable only from the compose network.
+    environment:
+      - MODEL_GATEWAY_PORT=4011
 
   postgres:
     image: postgres:16-alpine

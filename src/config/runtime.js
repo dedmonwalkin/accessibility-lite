@@ -46,6 +46,10 @@ export function runtimeConfig() {
     modelHttpBaseUrl: env.MODEL_HTTP_BASE_URL || '',
     modelHttpApiKey: env.MODEL_HTTP_API_KEY || '',
     modelHttpTimeoutMs: parseNumber('MODEL_HTTP_TIMEOUT_MS', env.MODEL_HTTP_TIMEOUT_MS, 4000, { min: 100, max: 600_000 }),
+    // Lets the SSRF guard reach an operator-configured gateway on a private
+    // network (e.g. http://model-gateway:4011 inside docker-compose). Applies
+    // only to MODEL_HTTP_BASE_URL, never to user-supplied URLs.
+    modelHttpAllowPrivate: parseBool(env.MODEL_HTTP_ALLOW_PRIVATE, false),
     modelFallbackOnError: parseBool(env.MODEL_FALLBACK_ON_ERROR, false),
     httpProviderMaxResponseBytes: parseNumber('HTTP_PROVIDER_MAX_RESPONSE_BYTES', env.HTTP_PROVIDER_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, { min: 1024, max: 1024 * 1024 * 1024 }),
     translationProvider: env.TRANSLATION_PROVIDER || 'mock',

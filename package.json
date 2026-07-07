@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
+    "start:gateway": "node model-gateway/server.js",
     "test": "node --test"
   },
   "engines": {
