@@ -50,6 +50,8 @@ export function runtimeConfig() {
     // network (e.g. http://model-gateway:4011 inside docker-compose). Applies
     // only to MODEL_HTTP_BASE_URL, never to user-supplied URLs.
     modelHttpAllowPrivate: parseBool(env.MODEL_HTTP_ALLOW_PRIVATE, false),
+    ingestTimeoutMs: parseNumber('INGEST_TIMEOUT_MS', env.INGEST_TIMEOUT_MS, 900_000, { min: 1000, max: 3_600_000 }),
+    ytDlpBin: env.YTDLP_BIN || 'yt-dlp',
     modelFallbackOnError: parseBool(env.MODEL_FALLBACK_ON_ERROR, false),
     httpProviderMaxResponseBytes: parseNumber('HTTP_PROVIDER_MAX_RESPONSE_BYTES', env.HTTP_PROVIDER_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, { min: 1024, max: 1024 * 1024 * 1024 }),
     translationProvider: env.TRANSLATION_PROVIDER || 'mock',

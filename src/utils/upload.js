@@ -22,7 +22,9 @@ const EXT_MAP = {
 // Magic-byte prefixes. The client-declared Content-Type is attacker-controlled;
 // we refuse the upload if the first bytes don't match a known media container.
 // This is defense-in-depth ahead of ffprobe (which has had exploitable CVEs).
-function magicBytesMatch(head, mimeType) {
+// Exported for reuse by URL ingestion, where the "declared" type comes from
+// the URL's file extension instead of a form field.
+export function magicBytesMatch(head, mimeType) {
   if (head.length < 12) return false;
   const isMp4Family = head.slice(4, 8).toString('ascii') === 'ftyp';
   switch (mimeType) {

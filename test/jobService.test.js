@@ -171,4 +171,31 @@ describe('Accessibility Lite API', () => {
     const res = await request('POST', `/v1/jobs/${fakeId}/process`, big);
     assert.equal(res.status, 413);
   });
+
+  it('from-url: rejects missing url', async () => {
+    const res = await request('POST', '/v1/jobs/from-url', {});
+    assert.equal(res.status, 400);
+    assert.ok(res.data.error.includes('url is required'));
+  });
+
+  it('from-url: rejects non-http protocols', async () => {
+    const res = await request('POST', '/v1/jobs/from-url', { url: 'ftp://example.com/x.mp4' });
+    assert.equal(res.status, 400);
+  });
+
+  it('from-url: refuses cloud-metadata IP (SSRF)', async () => {
+    const res = await request('POST', '/v1/jobs/from-url', { url: 'https://169.254.169.254/latest/meta-data.mp4' });
+    assert.equal(res.status, 400);
+    assert.ok(/Refusing/.test(res.data.error));
+  });
+
+  it('from-url: refuses localhost (SSRF)', async () => {
+    const res = await request('POST', '/v1/jobs/from-url', { url: 'http://localhost:3100/x.mp4' });
+    assert.equal(res.status, 400);
+  });
+
+  it('from-url: refuses private-range literal IP (SSRF)', async () => {
+    const res = await request('POST', '/v1/jobs/from-url', { url: 'https://10.0.0.5/video.mp4' });
+    assert.equal(res.status, 400);
+  });
 });
