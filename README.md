@@ -1,6 +1,6 @@
-# Accessibility Lite
+# Inclusy
 
-Open source accessibility pipeline. Upload any video or audio file and get **captions**, **AI audio descriptions**, and **sign language overlays** — all from a single tool.
+Open source accessibility pipeline, running at **[inclusy.org](https://inclusy.org)**. Upload any video or audio file and get **captions**, **AI audio descriptions**, and **sign language overlays** — all from a single tool. Then add the whole layer to your own site with one script tag.
 
 ## Why this exists
 
@@ -14,6 +14,7 @@ Captions exist in some tools. Audio descriptions barely exist in automated form.
 - **Audio Descriptions** — AI-generated narration of visual content during dialogue gaps.
 - **Sign Language** — Gloss tokens and sign cards for 10 sign languages (ASL, BSL, LSF, ISL, JSL, DGS, AUSLAN, LIBRAS, NZSL, HKSL). 6 overlay themes including high contrast and kid-friendly modes.
 - **Shareable Player** — Each processed file gets a player page with live captions, sign overlays, and audio descriptions. Share the link with anyone.
+- **Embeddable plugin** — One script tag adds all three layers to a video on your own site. See [The plugin](#the-plugin).
 
 ## Quick start
 
@@ -38,6 +39,48 @@ docker compose up
 docker build -t accessibility-lite .
 docker run -p 3000:3000 accessibility-lite
 ```
+
+## The plugin
+
+Process a file, press **Publish and get embed code** on the results page, and paste the snippet onto any page that has a video:
+
+```html
+<video src="my-talk.mp4" controls></video>
+<script src="https://inclusy.org/embed.js"
+        data-inclusy="YOUR_EMBED_ID"
+        data-lang="en-US"
+        data-sign="on"
+        data-ad="panel"></script>
+```
+
+**Inclusy never serves your media.** The embed sends only the accessibility layer — a few kilobytes of caption, description, and sign data — so your video stays on your own host. There is no bandwidth cost, and published embeds are exempt from the 24-hour job expiry.
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `data-inclusy` | required | Embed ID from publishing a result |
+| `data-target` | first `<video>` | CSS selector for the video to attach to |
+| `data-lang` | job default | Caption language, e.g. `es-ES` |
+| `data-sign` | `on` | `on` or `off` — the sign gloss overlay |
+| `data-ad` | `panel` | `panel`, `speak` (reads aloud and ducks the video), or `off` |
+| `data-position` | `top-right` | Overlay corner. The bottom is left free for the caption line and controls |
+
+For platforms that strip `<script>` tags (Squarespace, Notion, most newsletter tools), use the iframe instead:
+
+```html
+<iframe src="https://inclusy.org/embed/YOUR_EMBED_ID?src=https://yoursite.com/my-talk.mp4"
+        width="100%" height="480" allowfullscreen title="Accessible player"></iframe>
+```
+
+### How it's built
+
+Two decisions shape the script:
+
+- **Cues are injected programmatically** with `addTextTrack` + `VTTCue`, not via a cross-origin `<track src>`. A cross-origin track would require `crossorigin="anonymous"` on your `<video>`, which forces CORS on your media too and breaks videos served from a CDN without those headers.
+- **The overlay lives in a shadow root**, anchored to the video's own box. Your CSS can't break it, its CSS can't break your page, and it modifies nothing in your DOM.
+
+It's hand-written with no build step, ships at ~3.8KB gzipped, and never throws into the host page — every failure path warns to the console and no-ops. Because the base URL is derived from the script's own `src`, a self-hosted instance talks to itself rather than to inclusy.org.
+
+Captions are a native text track, so they keep working in fullscreen and with the browser's own caption UI. The sign and description overlay is a DOM layer, so it does not follow the video into fullscreen.
 
 ## Self-hosting with local models
 
@@ -80,8 +123,12 @@ TRANSLATION_HTTP_BASE_URL=http://localhost:5000
 ## Architecture
 
 ```
+public/                              — Static assets served at /static/*
+  fonts/                             — Self-hosted Atkinson Hyperlegible (SIL OFL)
+  og.png                             — Link preview image
+design/og.html                       — Source for og.png, re-render with headless Chrome
 src/
-  server.js                          — HTTP server, auth, rate limiting, SSE
+  server.js                          — HTTP server, auth, rate limiting, CORS, SSE
   config/
     runtime.js                       — Environment variable config
     accessibilityCatalog.js          — Supported languages, styles, themes
@@ -91,19 +138,29 @@ src/
     jobService.js                    — Job CRUD, preference normalization
     pipelineService.js               — Processing pipeline (extract, chunk, transcribe, infer)
     mediaService.js                  — ffmpeg/ffprobe operations
-    uiService.js                     — HTML page generation (upload, options, results, player)
-    cleanupService.js                — TTL-based job expiry and file cleanup
+    publishService.js                — Turns a finished job into a permanent embed
+    uiService.js                     — Facade re-exporting src/ui/ page builders
+    cleanupService.js                — TTL expiry; keeps published outputs, drops their media
     sampleService.js                 — Demo sample job creation
-    providers/
-      modelProvider.js               — Factory: mock | http
-      mockModelProvider.js           — Mock transcription and inference
-      httpModelProvider.js           — HTTP model gateway with fallback
-      translationProvider.js         — Factory: mock | libretranslate | deepl (with cache)
-    persistence/
-      persistenceService.js          — Noop/Postgres adapter with retry
-      postgresPersistence.js         — JSONB snapshot table
-      stateSerializer.js             — Export/import all Maps
+    providers/                       — model | transcription | translation factories
+    persistence/                     — Noop/Postgres adapter, JSONB snapshots, serializer
+  ui/
+    tokens.js                        — Design tokens, type scale, base stylesheet
+    layout.js                        — HTML shell: head tags, chrome, theme + text-size boot
+    signOverlay.js                   — Sign overlay shared by results, player, and embed
+    embedScript.js                   — The plugin served at /embed.js
+    escape.js                        — HTML escaping and URL validation
+    pages/                           — upload, options, results, player, embed, error
 ```
+
+### Design system
+
+The palette, type scale, and spacing live in `src/ui/tokens.js`. Two rules hold it together, both because this is an accessibility product whose own site is the first demo:
+
+1. **No text below 14px.** Body is 18px.
+2. **No opacity-dimmed text.** Every muted value is a token with a measured contrast ratio.
+
+`test/contrast.test.js` recomputes every token pair on each run and fails if any text pair drops below 4.5:1 or any interactive border below 3:1. The UI is set in [Atkinson Hyperlegible](https://www.brailleinstitute.org/freefont/), designed by the Braille Institute for low-vision legibility, self-hosted so no request leaves your origin.
 
 ## API
 
@@ -122,9 +179,25 @@ src/
 | `GET` | `/v1/jobs/:id/audio-description.json` | Download audio descriptions |
 | `GET` | `/v1/jobs/:id/sign-data.json` | Download sign language data |
 | `GET` | `/v1/jobs/:id/media` | Stream original media (range requests supported) |
+| `POST` | `/v1/jobs/:id/publish` | Publish a finished job, returns an embed ID + snippet |
 | `GET` | `/jobs/:id/options` | Options page (HTML) |
 | `GET` | `/jobs/:id/results` | Results page (HTML) |
 | `GET` | `/player/:id` | Shareable player page |
+| `GET` | `/embed` | Plugin documentation |
+| `GET` | `/static/*` | Fonts and images |
+
+### Embed API
+
+Public, CORS-enabled (`Access-Control-Allow-Origin: *`), and permanent — these are the only cross-origin readable routes. Upload and processing endpoints deliberately are not.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/embed.js` | The plugin (gzipped, ~3.8KB) |
+| `GET` | `/embed/:embedId?src=` | Chromeless iframe player; `src` must be http/https |
+| `GET` | `/v1/embed/:embedId/manifest.json` | Languages and which layers exist |
+| `GET` | `/v1/embed/:embedId/captions.vtt?language=` | Cues |
+| `GET` | `/v1/embed/:embedId/audio-description.json` | Description segments |
+| `GET` | `/v1/embed/:embedId/sign-data.json` | Gloss tokens and sign cards |
 
 ## How processing works
 
@@ -155,7 +228,17 @@ On startup, the latest snapshot is loaded automatically.
 
 ## Job expiry
 
-Jobs and their uploaded files are automatically removed after 24 hours. The cleanup runs hourly and on startup.
+Unpublished jobs and their uploaded files are removed after 24 hours. The cleanup runs hourly and on startup.
+
+Published jobs are treated differently, because someone's website is loading them: the uploaded media is still deleted on the same 24-hour schedule (embeds never serve it), but the job record and its outputs — kilobytes of text — are kept indefinitely.
+
+Publishing triggers an immediate Postgres snapshot. This matters on Fly, where `auto_stop_machines` stops idle machines: an embed that existed only in memory would not survive the next scale-to-zero.
+
+## Environment
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SITE_URL` | `https://inclusy.org` | Public origin, used for canonical/OG tags and generated snippets |
 
 ## Tests
 
@@ -163,7 +246,7 @@ Jobs and their uploaded files are automatically removed after 24 hours. The clea
 npm test
 ```
 
-69+ tests covering providers, pipeline, UI generation, auth, rate limiting, and HTML escaping.
+100+ tests covering providers, pipeline, UI generation, auth, rate limiting, HTML escaping, the embed API and its CORS boundary, static path traversal, and WCAG contrast for every design token.
 
 ## License
 

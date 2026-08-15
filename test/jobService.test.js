@@ -76,11 +76,19 @@ function multipartUpload(path, filename, content, mimeType) {
   });
 }
 
-describe('Accessibility Lite API', () => {
+describe('Inclusy API', () => {
+  let app;
+
   before(async () => {
-    const app = await import('../src/server.js');
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    baseUrl = 'http://localhost:3000';
+    app = await import('../src/server.js');
+    // Port 0 lets the OS pick a free one — this suite used to assume 3000 and
+    // silently test whatever else happened to be bound there.
+    const port = await app.start(0);
+    baseUrl = `http://localhost:${port}`;
+  });
+
+  after(async () => {
+    await app.stop();
   });
 
   it('GET /health returns ok', async () => {
@@ -93,7 +101,7 @@ describe('Accessibility Lite API', () => {
     const res = await request('GET', '/');
     assert.equal(res.status, 200);
     assert.ok(res.headers['content-type'].includes('text/html'));
-    assert.ok(res.data.includes('Accessibility Lite'));
+    assert.ok(res.data.includes('Inclusy'));
   });
 
   it('GET /v1/catalog returns accessibility catalog', async () => {

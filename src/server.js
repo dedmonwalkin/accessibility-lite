@@ -1,6 +1,8 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
+import { pathToFileURL } from 'node:url';
 import { runtimeConfig } from './config/runtime.js';
 import { sendJson, sendHtml, parseJsonBody, parseUrl } from './utils/http.js';
 import { formatVtt, formatTtml } from './utils/vtt.js';
@@ -10,6 +12,9 @@ import { uiService } from './services/uiService.js';
 import { persistenceService } from './services/persistence/persistenceService.js';
 import { cleanupService } from './services/cleanupService.js';
 import { sampleService } from './services/sampleService.js';
+import { publishService } from './services/publishService.js';
+import { buildEmbedScript } from './ui/embedScript.js';
+import { SITE_URL } from './ui/layout.js';
 import {
   SUPPORTED_OUTPUT_LANGUAGES,
   SUPPORTED_SIGN_LANGUAGES,
@@ -24,14 +29,39 @@ const config = runtimeConfig();
 
 // ── Auth ────────────────────────────────────────────────────────
 
+/**
+ * Paths that stay open even when API_KEYS is set. The embed surface has to be
+ * here: it is loaded by third-party pages that have no key and never should.
+ */
 export function isPublicPath(method, pathname) {
   if (method !== 'GET') return false;
   if (pathname === '/') return true;
   if (pathname === '/health') return true;
   if (pathname === '/v1/catalog') return true;
+  if (pathname === '/embed' || pathname === '/embed.js') return true;
+  if (pathname.startsWith('/embed/')) return true;
+  if (pathname.startsWith('/static/')) return true;
   if (pathname.startsWith('/player/')) return true;
+  if (pathname.startsWith('/v1/embed/')) return true;
   if (/^\/v1\/jobs\/[^/]+\/media$/.test(pathname)) return true;
   return false;
+}
+
+/**
+ * CORS is granted only to the read-only embed API and the script itself.
+ * Upload and processing endpoints are deliberately excluded — a third-party
+ * page has no business creating jobs on someone else's behalf.
+ */
+export function isCorsPath(pathname) {
+  return pathname === '/embed.js' || pathname.startsWith('/v1/embed/');
+}
+
+function applyCors(res, pathname) {
+  if (!isCorsPath(pathname)) return;
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Max-Age', '86400');
 }
 
 export function authenticate(req, url) {
@@ -129,12 +159,87 @@ const MIME_TYPES = {
   '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.m4a': 'audio/mp4'
 };
 
+/**
+ * embed.js is the one asset third-party pages pull on every load, so it is
+ * built once and kept gzipped in memory rather than regenerated per request.
+ */
+let embedScriptCache = null;
+let embedScriptGzipCache = null;
+
+function embedScriptRaw() {
+  if (!embedScriptCache) embedScriptCache = Buffer.from(buildEmbedScript(SITE_URL), 'utf8');
+  return embedScriptCache;
+}
+
+function embedScriptGzipped() {
+  if (!embedScriptGzipCache) embedScriptGzipCache = zlib.gzipSync(embedScriptRaw(), { level: 9 });
+  return embedScriptGzipCache;
+}
+
+const STATIC_DIR = path.resolve('public');
+const STATIC_MIME_TYPES = {
+  '.woff2': 'font/woff2', '.png': 'image/png', '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8',
+  '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8'
+};
+
+/**
+ * Serves public/ at /static/*. The resolved path is checked against STATIC_DIR
+ * before anything is read — without that, `/static/../../etc/passwd` is a file
+ * disclosure bug.
+ */
+export function resolveStaticPath(pathname) {
+  const relative = decodeURIComponent(pathname.replace(/^\/static\//, ''));
+  const resolved = path.resolve(STATIC_DIR, relative);
+  if (resolved !== STATIC_DIR && !resolved.startsWith(STATIC_DIR + path.sep)) return null;
+  return resolved;
+}
+
+async function serveStatic(res, pathname) {
+  const filePath = resolveStaticPath(pathname);
+  if (!filePath) return sendJson(res, 403, { error: 'Forbidden' });
+
+  let stat;
+  try {
+    stat = await fs.promises.stat(filePath);
+    if (!stat.isFile()) throw new Error('not a file');
+  } catch {
+    return sendJson(res, 404, { error: 'Not found' });
+  }
+
+  // Fonts are content-stable and named by weight/subset; everything else can
+  // change on a redeploy, so it gets a day rather than a year.
+  const isFont = path.extname(filePath) === '.woff2';
+
+  res.writeHead(200, {
+    'Content-Type': STATIC_MIME_TYPES[path.extname(filePath)] || 'application/octet-stream',
+    'Content-Length': stat.size,
+    'Cache-Control': isFont ? 'public, max-age=31536000, immutable' : 'public, max-age=86400'
+  });
+  fs.createReadStream(filePath).pipe(res);
+}
+
 async function handleRequest(req, res) {
   const url = parseUrl(req);
   const pathname = url.pathname;
-  const method = req.method;
+  const isHead = req.method === 'HEAD';
+  const method = isHead ? 'GET' : req.method;
+
+  if (isHead) {
+    const originalEnd = res.end.bind(res);
+    res.end = (..._args) => originalEnd();
+    res.write = () => true;
+  }
 
   try {
+    applyCors(res, pathname);
+
+    // CORS preflight — answered before auth, since it never carries credentials.
+    if (req.method === 'OPTIONS') {
+      res.writeHead(isCorsPath(pathname) ? 204 : 405);
+      return res.end();
+    }
+
     // Rate limiting
     const retryAfter = checkRateLimit(req);
     if (retryAfter !== null) {
@@ -157,6 +262,105 @@ async function handleRequest(req, res) {
     // Upload page
     if (pathname === '/' && method === 'GET') {
       return sendHtml(res, 200, uiService.buildUploadPage());
+    }
+
+    // Static assets (fonts, og image)
+    if (pathname.startsWith('/static/') && method === 'GET') {
+      return serveStatic(res, pathname);
+    }
+
+    // ── Embed surface ───────────────────────────────────────────
+
+    if (pathname === '/embed.js' && method === 'GET') {
+      const wantsGzip = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
+      const body = wantsGzip ? embedScriptGzipped() : embedScriptRaw();
+
+      res.writeHead(200, {
+        'Content-Type': 'text/javascript; charset=utf-8',
+        'Content-Length': body.length,
+        'Cache-Control': 'public, max-age=3600',
+        ...(wantsGzip ? { 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding' } : { Vary: 'Accept-Encoding' })
+      });
+      return res.end(body);
+    }
+
+    if (pathname === '/embed' && method === 'GET') {
+      return sendHtml(res, 200, uiService.buildEmbedDocsPage({ embedId: url.searchParams.get('id') || '' }));
+    }
+
+    let params = extractParams(pathname, '/embed/:embedId');
+    if (params && method === 'GET') {
+      const resolved = publishService.resolve(params.embedId);
+      if (!resolved) {
+        return sendHtml(res, 404, uiService.buildErrorPage(404, 'Embed not found', 'This embed ID does not exist. Check the snippet you pasted.'));
+      }
+      return sendHtml(res, 200, uiService.buildEmbedFramePage({
+        embedId: params.embedId,
+        src: url.searchParams.get('src') || '',
+        lang: url.searchParams.get('lang') || resolved.job.preferences.output_languages[0] || 'en-US',
+        sign: url.searchParams.get('sign') === 'off' ? 'off' : 'on',
+        ad: ['panel', 'speak', 'off'].includes(url.searchParams.get('ad')) ? url.searchParams.get('ad') : 'panel'
+      }));
+    }
+
+    params = extractParams(pathname, '/v1/embed/:embedId/manifest.json');
+    if (params && method === 'GET') {
+      const resolved = publishService.resolve(params.embedId);
+      if (!resolved) return sendJson(res, 404, { error: 'Embed not found' });
+      const { job, outputs } = resolved;
+      return sendJson(res, 200, {
+        embed_id: params.embedId,
+        languages: job.preferences.output_languages,
+        default_language: job.preferences.output_languages[0] || 'en-US',
+        sign_language: job.preferences.sign_language,
+        sign_overlay_theme: job.preferences.sign_overlay_theme,
+        has_sign: (outputs.signScript || []).length > 0,
+        has_audio_description: (outputs.audioDescription || []).length > 0,
+        caption_segments: (outputs.captions || []).length,
+        duration_ms: job.duration_ms
+      });
+    }
+
+    params = extractParams(pathname, '/v1/embed/:embedId/captions.vtt');
+    if (params && method === 'GET') {
+      const resolved = publishService.resolve(params.embedId);
+      if (!resolved) return sendJson(res, 404, { error: 'Embed not found' });
+      const { job, outputs } = resolved;
+
+      const language = url.searchParams.get('language') || job.preferences.output_languages[0] || 'en-US';
+      const captions = outputs.captionTranslations[language] || outputs.captions;
+      const vtt = formatVtt(personalizeCaptions(captions, job.preferences.caption_style));
+
+      res.writeHead(200, {
+        'Content-Type': 'text/vtt; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600'
+      });
+      return res.end(vtt);
+    }
+
+    params = extractParams(pathname, '/v1/embed/:embedId/audio-description.json');
+    if (params && method === 'GET') {
+      const resolved = publishService.resolve(params.embedId);
+      if (!resolved) return sendJson(res, 404, { error: 'Embed not found' });
+      const { job, outputs } = resolved;
+      return sendJson(res, 200, {
+        embed_id: params.embedId,
+        segments: personalizeAudioDesc(outputs.audioDescription, job.preferences.audio_description_style)
+      });
+    }
+
+    params = extractParams(pathname, '/v1/embed/:embedId/sign-data.json');
+    if (params && method === 'GET') {
+      const resolved = publishService.resolve(params.embedId);
+      if (!resolved) return sendJson(res, 404, { error: 'Embed not found' });
+      const { job, outputs } = resolved;
+      return sendJson(res, 200, {
+        embed_id: params.embedId,
+        sign_language: job.preferences.sign_language,
+        sign_overlay_theme: job.preferences.sign_overlay_theme,
+        sign_script: outputs.signScript,
+        sign_cards: outputs.signCards
+      });
     }
 
     // Catalog
@@ -185,7 +389,7 @@ async function handleRequest(req, res) {
     }
 
     // Job status
-    let params = extractParams(pathname, '/v1/jobs/:id');
+    params = extractParams(pathname, '/v1/jobs/:id');
     if (params && method === 'GET') {
       const job = jobService.getJob(params.id);
       if (!job) return sendJson(res, 404, { error: 'Job not found' });
@@ -215,6 +419,21 @@ async function handleRequest(req, res) {
       jobService.updatePreferences(params.id, body);
       await jobService.processJob(params.id);
       return sendJson(res, 202, { status: 'processing', job_id: params.id });
+    }
+
+    // Publish a finished job as a permanent embed
+    params = extractParams(pathname, '/v1/jobs/:id/publish');
+    if (params && method === 'POST') {
+      let published;
+      try {
+        published = publishService.publish(params.id);
+      } catch (err) {
+        return sendJson(res, err.message === 'Job not found' ? 404 : 409, { error: err.message });
+      }
+      // Snapshot immediately: fly.toml stops idle machines, so an embed that
+      // only exists in memory would not survive the next scale-to-zero.
+      await persistenceService.snapshot('publish').catch(() => {});
+      return sendJson(res, 201, published);
     }
 
     // SSE progress
@@ -396,7 +615,10 @@ async function handleRequest(req, res) {
   }
 }
 
-const server = http.createServer(handleRequest);
+export const server = http.createServer(handleRequest);
+
+/** Background timers, kept so tests can stop them and let the process exit. */
+const timers = [];
 
 // Snapshot when any job finishes — listen for progress events and trigger on complete/error
 const originalEmit = jobEmitter.emit.bind(jobEmitter);
@@ -407,43 +629,61 @@ jobEmitter.emit = function (event, data) {
   }
 };
 
-async function start() {
+/**
+ * @param {number} [port] overrides config.port — pass 0 to let the OS pick a
+ *   free one, which is how the tests avoid fighting whatever else is bound to
+ *   3000 on the machine.
+ * @returns {Promise<number>} the port actually bound
+ */
+export async function start(port = config.port) {
   await persistenceService.configure(config);
   await persistenceService.loadLatest();
 
-  server.listen(config.port, () => {
-    console.log(`Accessibility Lite running on http://localhost:${config.port}`);
-    console.log(`Model provider: ${config.modelProvider}`);
-    console.log(`Persistence: ${config.enablePostgres ? 'postgres' : 'in-memory only'}`);
-  });
+  await new Promise((resolve) => server.listen(port, resolve));
+  const boundPort = server.address().port;
+  console.log(`Inclusy running on http://localhost:${boundPort}`);
+  console.log(`Model provider: ${config.modelProvider}`);
+  console.log(`Persistence: ${config.enablePostgres ? 'postgres' : 'in-memory only'}`);
 
   // Periodic snapshots
   if (config.snapshotIntervalMs > 0) {
-    setInterval(() => {
+    timers.push(setInterval(() => {
       persistenceService.snapshot('interval').catch(() => {});
-    }, config.snapshotIntervalMs);
+    }, config.snapshotIntervalMs));
   }
 
   // Job cleanup every hour (24h TTL)
-  setInterval(() => {
+  timers.push(setInterval(() => {
     cleanupService.run();
-  }, 60 * 60 * 1000);
+  }, 60 * 60 * 1000));
   // Run once on startup to clear stale jobs from previous sessions
   cleanupService.run();
 
-  // Graceful shutdown
-  async function shutdown() {
-    console.log('Shutting down...');
-    await persistenceService.snapshot('shutdown').catch(() => {});
-    await persistenceService.close();
-    server.close();
-    process.exit(0);
-  }
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  return boundPort;
 }
 
-start().catch((err) => {
-  console.error('Failed to start:', err);
-  process.exit(1);
-});
+export async function stop() {
+  timers.splice(0).forEach(clearInterval);
+  await persistenceService.close().catch(() => {});
+  await new Promise((resolve) => server.close(resolve));
+}
+
+async function shutdown() {
+  console.log('Shutting down...');
+  await persistenceService.snapshot('shutdown').catch(() => {});
+  await stop();
+  process.exit(0);
+}
+
+/**
+ * Only boot when run directly. Importing this module (as the tests do) must not
+ * bind a port — that was what left `node --test` hanging forever.
+ */
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+  start().catch((err) => {
+    console.error('Failed to start:', err);
+    process.exit(1);
+  });
+}
