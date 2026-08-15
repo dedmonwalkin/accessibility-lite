@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import { store } from '../data/store.js';
 import { createModelProvider } from './providers/modelProvider.js';
 import { createTranslationProvider } from './providers/translationProvider.js';
-import { mediaService } from './mediaService.js';
+import { mediaService, audioOutputPath } from './mediaService.js';
 import { runtimeConfig } from '../config/runtime.js';
 
 export const jobEmitter = new EventEmitter();
@@ -81,7 +81,7 @@ export async function runJobPipeline(jobId) {
 
     emitProgress(jobId, 0, 'Extracting audio...');
 
-    const audioPath = job.file_path.replace(/\.[^.]+$/, '.wav');
+    const audioPath = audioOutputPath(job.file_path);
     if (job.has_audio) {
       await mediaService.extractAudio(job.file_path, audioPath);
     } else {

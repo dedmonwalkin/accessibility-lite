@@ -5,6 +5,12 @@ import path from 'node:path';
 
 const exec = promisify(execFile);
 
+export function audioOutputPath(inputPath) {
+  const dir = path.dirname(inputPath);
+  const base = path.basename(inputPath).replace(/\.[^.]+$/, '');
+  return path.join(dir, `${base}.audio.wav`);
+}
+
 export const mediaService = {
   async probe(filePath) {
     const { stdout } = await exec('ffprobe', [
