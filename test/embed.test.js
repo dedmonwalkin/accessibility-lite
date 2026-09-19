@@ -52,7 +52,7 @@ describe('embed surface', () => {
     const media = await get('/media');
     assert.equal(home.status, 200);
     assert.equal(media.status, 200);
-    assert.ok(home.data.includes('A clearer path to access.'));
+    assert.ok(home.data.includes('id="home-title">Public services.'));
     assert.ok(!home.data.includes('id="uploadForm"'));
     assert.ok(media.data.includes('id="uploadForm"'));
     assert.ok(media.data.includes('Media tools, in development.'));

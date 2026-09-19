@@ -6,9 +6,11 @@ work and need reconciliation before production release.
 
 - `/` describes a proposed accessibility examination and remediation service.
 - `/media` keeps the upload tool, clearly marked experimental.
-- `CONTACT_EMAIL` enables a contact link only when it is a plain mailbox address.
-  Leave it unset until that mailbox is verified and monitored. Validation here
-  checks syntax, not deliverability, licensing, or readiness to accept clients.
+- General contact defaults to the owner's verified `bob@inclusy.org` mailbox.
+  `CONTACT_EMAIL` can override it with a plain mailbox address; an explicitly
+  empty or invalid value hides general enquiries. Accessibility enquiries use
+  the verified `accessibility@inclusy.org` forwarder. Syntax validation does not
+  establish service readiness, monitoring, or deliverability.
 - No legal certification, fully automatic remediation, real-inference, sign
   interpretation, or data-residency claims are made on the new homepage.
 - The initial service scope, attribution, terms, privacy notice, and contact
@@ -30,3 +32,31 @@ media only. Do not treat automated tests as a complete accessibility audit.
   skip link on keyboard focus; no observed console errors.
 - Not verified: real model accuracy, a representative media corpus, screen-reader
   user testing, production API-key browser flow, or the deployed environment.
+
+## Combined design, September 19, 2026
+
+The service-first implementation now combines the reference draft's warm paper,
+green/clay palette and editorial hierarchy with the existing application's
+self-hosted body fonts, tested theme tokens, semantic structure, and media routes.
+Original architectural line art and a clearly labeled fictional finding explain
+the practice without borrowed client logos, testimonials, or certification claims.
+
+The reference draft's obligations calculator was not imported. Its replacement
+is a local-only scoping guide: four starting points, native selection and button
+controls, a polite live result, and a no-JavaScript contact fallback. It does not
+determine legal applicability, deadlines, or compliance. No new dependencies,
+external fonts, analytics, or third-party requests were added to the homepage.
+
+- `npm test`: 113 passing tests, including new planner behavior, preference
+  validation, fragment targets, and contrast checks for all editorial surfaces.
+- Browser: 320, 390, 768, and 1280 CSS-pixel widths checked with maximum built-in
+  text size; no horizontal or nested content overflow observed. Light/dark
+  themes, guide choices, keyboard activation, visible skip-link focus, and focus
+  transfer to main verified. Enlarged list-marker spacing corrected visually.
+- Mock sample: `/media` to options to results completed locally. No embed was
+  published. No console warnings or errors observed during these checks.
+- No full assistive-technology audit, real-media accuracy testing, production
+  auth validation, or deployment performed. Existing legacy media copy and the
+  separate security/inference branches remain launch review items.
+- Design checkpoint approved for a local commit on `codex/inclusy-service-launch`.
+  No push or deployment is authorized by this checkpoint.

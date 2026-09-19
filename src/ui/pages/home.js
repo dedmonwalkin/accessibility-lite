@@ -1,92 +1,132 @@
 import { page } from '../layout.js';
 import { escapeHtml } from '../escape.js';
+import { HOME_STYLES } from '../homeStyles.js';
+import { PROJECT_OPTIONS, projectOutline, plannerScript } from '../projectPlanner.js';
 
-export function buildHomePage({ contactEmail = '' } = {}) {
-  // Only a configured, plain mailbox becomes an actionable contact link.
+export function buildHomePage({ contactEmail = 'bob@inclusy.org' } = {}) {
   const email = typeof contactEmail === 'string' ? contactEmail.trim() : '';
   const validEmail = /^[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/.test(email);
   const contact = validEmail
-    ? `<a class="btn" href="mailto:${escapeHtml(email)}">Discuss your project</a>
-       <p class="muted small">${escapeHtml(email)}. Please do not email credentials or sensitive records.</p>`
-    : '<p>Client enquiries are not open yet. We are preparing our service and contact process before accepting engagements.</p>';
+    ? `<a class="contact-address" href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a>`
+    : '<p>Client enquiries are not open yet. Our contact process is being prepared.</p>';
 
   return page({
-    title: 'Accessibility, with a clear next step',
-    description: 'Inclusy is developing practical accessibility examination and remediation support for websites, media, and organizational readiness.',
+    title: 'Accessibility for the people you serve',
+    description: 'Practical accessibility examination and remediation planning for public-facing websites, documents, and media. Clear evidence. Useful next steps.',
     path: '/',
-    styles: `
-      .home-kicker { font-size: var(--text-sm); font-weight: 700; color: var(--accent); }
-      .home-hero { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--s7); align-items: center; padding: var(--s8) 0; }
-      .home-hero h1 { font-size: clamp(2.25rem, 5vw, 4rem); max-width: 15ch; line-height: 1.08; letter-spacing: -.025em; }
-      .home-lead { font-size: var(--text-lg); color: var(--ink-muted); max-width: 47ch; }
-      .home-actions { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s5); }
-      .home-record { background: var(--surface); border: 1px solid var(--border); padding: var(--s5); box-shadow: 8px 8px 0 var(--rule); }
-      .home-record h2 { font-size: var(--text-lg); }
-      .home-record ol { padding-left: var(--s5); }
-      .home-record li { padding: var(--s3) 0; border-bottom: 1px solid var(--rule); }
-      .home-record li:last-child { border: 0; }
-      .home-record strong, .home-record span { display: block; }
-      .home-record span { color: var(--ink-muted); font-size: var(--text-sm); }
-      .home-section { padding: var(--s7) 0; border-top: 1px solid var(--rule); scroll-margin-top: var(--s5); }
-      .home-services { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s6); margin-top: var(--s5); }
-      .home-services h3 { font-size: var(--text-lg); }
-      .home-services p { color: var(--ink-muted); }
-      .home-note { border-left: 4px solid var(--accent); padding: var(--s3) var(--s5); background: var(--surface); }
-      .home-contact { max-width: 65ch; }
-      @media (max-width: 800px) {
-        .home-hero, .home-services { grid-template-columns: 1fr; }
-        .home-hero { gap: var(--s5); padding: var(--s6) 0; }
-        .home-record { box-shadow: 4px 4px 0 var(--rule); }
-      }
-    `,
+    styles: HOME_STYLES,
     body: `
-      <section class="home-hero" aria-labelledby="home-title">
-        <div>
-          <p class="home-kicker">Inclusy / Accessibility in practice</p>
-          <h1 id="home-title">A clearer path to access.</h1>
-          <p class="home-lead">Understand the barriers. Make a practical plan. Keep a record of what changed.</p>
-          <p>We are developing accessibility examination and remediation support for organizations, with an initial focus on Ontario.</p>
-          <div class="home-actions">
-            <a class="btn" href="#services">Explore the approach</a>
-            <a class="btn-outline" href="/media">Explore media tools</a>
+    <div class="civic-home">
+      <section class="civic-hero" aria-labelledby="home-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Digital accessibility / Public-facing services</p>
+          <h1 id="home-title">Public services.<br>Open to <em>everyone.</em></h1>
+          <p class="hero-lede">Find the barriers. Understand the impact.<br>Make a plan to put things right.</p>
+          <p class="hero-description">Accessibility examination and remediation support in development for municipalities, public bodies, and organizations. Starting with the websites, documents, and media people rely on.</p>
+          <div class="civic-actions">
+            <a class="btn" href="#contact">Discuss your project <span aria-hidden="true">&#8599;</span></a>
+            <a class="text-link" href="#approach">See what a useful finding looks like <span aria-hidden="true">&#8595;</span></a>
           </div>
         </div>
-        <aside class="home-record" aria-labelledby="record-title">
-          <p class="home-kicker">The proposed engagement</p>
-          <h2 id="record-title">Evidence you can work with.</h2>
-          <ol>
-            <li><strong>Define the scope</strong><span>Agree what is being examined and why.</span></li>
-            <li><strong>Document the barriers</strong><span>Capture reproducible findings and their impact.</span></li>
-            <li><strong>Plan and verify fixes</strong><span>Assign actions, retest, and record limitations.</span></li>
+        <figure class="access-figure">
+          <svg viewBox="0 0 420 370" aria-hidden="true" focusable="false" class="access-drawing">
+            <defs><pattern id="access-grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M 24 0 L 0 0 0 24" fill="none" stroke="currentColor" stroke-width=".6"/></pattern></defs>
+            <rect x="1" y="1" width="418" height="368" fill="url(#access-grid)" class="drawing-grid"/>
+            <path d="M48 302 V119 Q48 39 128 39 Q208 39 208 119 V302" class="drawing-arch drawing-back"/>
+            <path d="M133 302 V148 Q133 68 213 68 Q293 68 293 148 V302" class="drawing-arch drawing-middle"/>
+            <path d="M218 302 V177 Q218 97 298 97 Q378 97 378 177 V302" class="drawing-arch drawing-front"/>
+            <path d="M28 302 H396 M28 322 H396" class="drawing-ground"/>
+            <path d="M74 344 C130 344 137 274 206 274 H322 M307 261 L322 274 L307 287" class="drawing-route"/>
+            <circle cx="74" cy="344" r="5" class="drawing-dot"/>
+          </svg>
+          <figcaption><span class="figure-number">01 / Access by design</span><span>Different needs. A shared right to participate.</span></figcaption>
+        </figure>
+      </section>
+
+      <div class="principle-strip" aria-label="Our principles">
+        <span>Evidence before assurances</span><span>People before scores</span><span>Clear scope. Honest limits.</span>
+      </div>
+
+      <section class="civic-section" id="services" aria-labelledby="services-title">
+        <div class="section-intro">
+          <div><p class="eyebrow">01 / The proposed practice</p><h2 id="services-title">Know where you stand.<br>Know what comes next.</h2></div>
+          <p>Not every organization needs the same engagement. Start with a defined scope, the people affected, and a deliverable your team can actually use.</p>
+        </div>
+        <div class="service-grid">
+          <article class="service-item"><span class="service-number" aria-hidden="true">01</span><div><h3>Accessibility examination</h3><p>Review key journeys across websites, forms, and documents. Plan automated checks alongside keyboard and assistive-technology testing.</p><p class="deliverable"><strong>The record:</strong> scoped findings, evidence, and user impact.</p></div></article>
+          <article class="service-item"><span class="service-number" aria-hidden="true">02</span><div><h3>Remediation &amp; retesting</h3><p>Turn findings into work your staff or web vendor can act on. Agree priorities, ownership, and how each fix will be checked.</p><p class="deliverable"><strong>The record:</strong> an action plan and verification notes.</p></div></article>
+          <article class="service-item"><span class="service-number" aria-hidden="true">03</span><div><h3>Reporting readiness</h3><p>Organize supporting evidence and unresolved questions for the client's review. Ontario portal assistance remains subject to ministry clarification.</p><p class="deliverable"><strong>The record:</strong> an evidence index and readiness summary.</p></div></article>
+          <article class="service-item"><span class="service-number" aria-hidden="true">04</span><div><h3>Media accessibility planning</h3><p>Scope caption, transcript, and description needs for meetings, briefings, and recordings. Separate draft generation from quality review.</p><p class="deliverable"><strong>The record:</strong> a media inventory and review plan.</p></div></article>
+        </div>
+      </section>
+
+      <section class="civic-section evidence-section" id="approach" aria-labelledby="approach-title">
+        <div class="evidence-copy">
+          <p class="eyebrow">02 / A finding, not just a score</p>
+          <h2 id="approach-title">Something your team<br>can put to work.</h2>
+          <p>A useful report connects a barrier to a real task. It explains what happened, who it affects, and what to do next.</p>
+          <ol class="method-list">
+            <li><strong>Agree the scope.</strong><span>List the services, representative pages, documents, standards, and testing methods.</span></li>
+            <li><strong>Document the experience.</strong><span>Record reproducible steps, user impact, and supporting evidence. State what was not tested.</span></li>
+            <li><strong>Fix, then verify.</strong><span>Give each action an owner. Retest the original task and record any remaining limitations.</span></li>
           </ol>
+        </div>
+        <aside class="finding-sheet" aria-labelledby="finding-title">
+          <div class="sheet-top"><span>Inclusy / Field notes</span><span>Illustrative example</span></div>
+          <p class="finding-id">Finding 001 <span class="finding-status">Open / Not retested</span></p>
+          <h3 id="finding-title">A resident cannot finish<br>the request form.</h3>
+          <dl class="finding-details">
+            <div><dt>Observed barrier</dt><dd>Keyboard focus becomes trapped inside the date picker.</dd></div>
+            <div><dt>Impact on the task</dt><dd>A person using a keyboard cannot reach the submit button.</dd></div>
+            <div><dt>Recommended action</dt><dd>Restore a predictable focus order and a keyboard-operable way to leave the picker.</dd></div>
+            <div><dt>Verification</dt><dd>Complete the request using only a keyboard, including opening and closing the picker.</dd></div>
+          </dl>
+          <p class="sheet-foot">A format example, not a client finding or completed audit.</p>
         </aside>
       </section>
 
-      <section class="home-section" id="services" aria-labelledby="services-title">
-        <p class="home-kicker">Three connected areas</p>
-        <h2 id="services-title">Start with the work that matters.</h2>
-        <div class="home-services">
-          <article><h3>Websites &amp; documents</h3><p>Scope key journeys, forms, and documents. Combine automated checks with planned keyboard and assistive-technology testing, then prioritize remediation.</p></article>
-          <article><h3>Video &amp; audio</h3><p>Identify caption, transcript, and description needs. Our open-source media tools are a development preview, not a substitute for qualified review.</p><a href="/media">See the media preview</a></article>
-          <article><h3>Organizational readiness</h3><p>Map applicable obligations, gather evidence, and prepare a clear record for the client's review. Portal assistance remains subject to ministry clarification.</p></article>
+      <section class="civic-section" id="project-plan" aria-labelledby="plan-title">
+        <div class="section-intro">
+          <div><p class="eyebrow">03 / Start small</p><h2 id="plan-title">What needs attention?</h2></div>
+          <p>You do not need to know the name of a standard to start a conversation. Choose a starting point for a practical project brief.</p>
         </div>
+        <div class="project-planner" id="projectPlanner" hidden>
+          <div class="planner-controls">
+            <label for="projectFocus">Your starting point</label>
+            <select id="projectFocus">${PROJECT_OPTIONS.map(({ value, label }) => `<option value="${value}">${label}</option>`).join('')}</select>
+            <button class="btn" type="button" id="outlineButton">Show a starting plan</button>
+            <p class="small muted">Runs in your browser. Nothing is submitted or saved by this guide.</p>
+          </div>
+          <div class="planner-result" role="status" aria-live="polite" aria-atomic="true">
+            <p class="eyebrow">Your starting plan</p>
+            <h3 id="outlineTitle">${projectOutline('unsure').title}</h3>
+            <p id="outlineText">${projectOutline('unsure').text}</p>
+          </div>
+        </div>
+        <noscript><p class="planner-fallback">The interactive guide needs JavaScript. You can still <a href="#contact">contact us directly</a> with the service, website, or recording you want to improve.</p></noscript>
+        <p class="section-note">This guide helps scope a conversation. It does not determine legal obligations, deadlines, or compliance.</p>
       </section>
 
-      <section class="home-section" id="approach" aria-labelledby="approach-title">
-        <p class="home-kicker">Clear scope. Honest limits.</p>
-        <h2 id="approach-title">More than a score or a widget.</h2>
-        <p>An automated scan can identify some barriers. A useful examination also needs context, manual testing, and a record of what was and was not checked. An accessibility menu does not establish compliance.</p>
-        <div class="home-note"><p>The proposed deliverables are a scoped findings register, a prioritized remediation plan, and a retest record. These are not legal advice, government certification, or a guarantee of compliance.</p></div>
-        <p>Reporting preparation and technical remediation are separate services. The client's authorized officer remains responsible for reviewing and certifying its report.</p>
-        <p><a href="https://www.ontario.ca/page/completing-your-accessibility-compliance-report">Ontario's accessibility reporting guidance</a></p>
+      <section class="media-band" id="pipeline" aria-labelledby="pipeline-title">
+        <div><p class="eyebrow">The open-source workbench / Development preview</p><h2 id="pipeline-title">Better access to<br>what is said <em>and shown.</em></h2><p>Explore the media workflow behind Inclusy: caption formats, description segments, and experimental sign-gloss output.</p><a class="btn-outline" href="/media">Explore the media preview <span aria-hidden="true">&#8599;</span></a></div>
+        <div class="media-notes"><h3>Useful tools. Human judgment.</h3><p>Mock providers are enabled by default. Outputs need accuracy and accessibility review before publication.</p><p>Sign gloss is not sign-language interpretation. Self-hosting does not, by itself, establish privacy compliance or data residency.</p><a href="https://github.com/dedmonwalkin/accessibility-lite">Explore the source code</a></div>
       </section>
 
-      <section class="home-section home-contact" id="contact" aria-labelledby="contact-title">
-        <p class="home-kicker">Preparing for a first engagement</p>
-        <h2 id="contact-title">A useful starting point.</h2>
-        <p>A first conversation should establish your organization type, the website or media involved, the people affected, and the outcome you need. Scope, timing, and terms should be agreed before work begins.</p>
-        ${contact}
+      <section class="civic-section boundaries" aria-labelledby="scope-title">
+        <div><p class="eyebrow">Before an engagement</p><h2 id="scope-title">Trust starts with<br>clear boundaries.</h2></div>
+        <div class="boundary-copy"><p>Agree the scope, deliverables, timetable, access needs, data handling, and fees in writing before work begins. Procurement requirements should be discussed, not assumed.</p><p>A scan or accessibility menu does not establish compliance. Our proposed deliverables are not legal advice, government certification, or a guarantee of compliance.</p><p>Our proposed reporting role is to prepare supporting evidence, not to certify on a client's behalf. Legal questions belong with qualified counsel.</p></div>
       </section>
-    `
+
+      <section class="civic-section accessibility-section" id="accessibility" aria-labelledby="accessibility-title">
+        <div><p class="eyebrow">Access to this site</p><h2 id="accessibility-title">The conversation<br>should be accessible, too.</h2></div>
+        <div><p>Our design target is WCAG 2.2 Level AA. This site is under development; this is a target, not a conformance claim or independent certification.</p><p>Use the text-size and theme controls in the header, or your browser's zoom. The site includes keyboard focus indicators and respects reduced-motion preferences.</p><p>Found a barrier? Tell us the page, what you were trying to do, and your preferred way to receive a reply. Please leave out sensitive personal information.</p><a class="text-link" href="mailto:accessibility@inclusy.org">accessibility@inclusy.org <span aria-hidden="true">&#8599;</span></a></div>
+      </section>
+
+      <section class="contact-section" id="contact" aria-labelledby="contact-title">
+        <div><p class="eyebrow">A good place to begin</p><h2 id="contact-title">Tell us what people<br>need to be able to do.</h2><p>A website, a document, a council meeting.<br>Start with the service and the people it needs to reach.</p>${contact}</div>
+        <aside class="contact-brief" aria-labelledby="brief-title"><h3 id="brief-title">For a useful first conversation</h3><ul><li>Your organization and location</li><li>The website, document, or media involved</li><li>A barrier you know about, or a question you have</li><li>Your timeframe and preferred reply format</li></ul><p class="small">Please do not email passwords, confidential documents, or sensitive records. A message starts a conversation, not an engagement.</p></aside>
+      </section>
+    </div>`,
+    scripts: plannerScript()
   });
 }

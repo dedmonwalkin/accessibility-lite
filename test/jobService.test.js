@@ -101,7 +101,7 @@ describe('Inclusy API', () => {
     const res = await request('GET', '/');
     assert.equal(res.status, 200);
     assert.ok(res.headers['content-type'].includes('text/html'));
-    assert.ok(res.data.includes('A clearer path to access.'));
+    assert.ok(res.data.includes('id="home-title">Public services.'));
   });
 
   it('GET /v1/catalog returns accessibility catalog', async () => {
