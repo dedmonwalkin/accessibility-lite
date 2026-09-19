@@ -47,6 +47,17 @@ describe('embed surface', () => {
     await app.stop();
   });
 
+  it('serves the service homepage separately from the media upload flow', async () => {
+    const home = await get('/');
+    const media = await get('/media');
+    assert.equal(home.status, 200);
+    assert.equal(media.status, 200);
+    assert.ok(home.data.includes('A clearer path to access.'));
+    assert.ok(!home.data.includes('id="uploadForm"'));
+    assert.ok(media.data.includes('id="uploadForm"'));
+    assert.ok(media.data.includes('Media tools, in development.'));
+  });
+
   it('publishes a finished job and returns a usable snippet', async () => {
     const res = await fetch(new URL(`/v1/jobs/${jobId}/publish`, baseUrl), { method: 'POST' });
     const data = await res.json();

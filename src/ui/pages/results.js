@@ -119,7 +119,7 @@ ${signOverlayStyles(theme)}
       </div>
     </div>
 
-    <p><a href="/">← Process another file</a></p>`,
+    <p><a href="/media">← Process another file</a></p>`,
     scripts: `
     var jobId = ${JSON.stringify(job.id)};
     var shareInput = document.getElementById('shareUrl');

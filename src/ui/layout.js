@@ -146,9 +146,10 @@ function header({ compact = false } = {}) {
     <div class="inner">
       <a class="wordmark" href="/">${markSvg()} Inclusy</a>
       <nav class="site-nav" aria-label="Main">
-        <a href="/#upload">Upload</a>
-        <a href="/embed">Add to your site</a>
-        <a href="https://github.com/dedmonwalkin/accessibility-lite" target="_blank" rel="noopener">GitHub</a>
+        <a href="/#services">Services</a>
+        <a href="/#approach">Approach</a>
+        <a href="/media">Media preview</a>
+        <a href="/#contact">Contact</a>
         <div class="pref-controls">
           <button type="button" class="pref-btn" id="textSizeToggle" aria-label="Change text size">A</button>
           <button type="button" class="pref-btn" id="themeToggle" aria-label="Switch theme">Dark</button>
@@ -178,7 +179,7 @@ function footer({ compact = false } = {}) {
  */
 export function page({
   title,
-  description = 'Upload any video or audio and get captions, audio descriptions, and sign language overlays. Open source, self-hostable, free.',
+  description = 'Inclusy accessibility services in development and open-source media tools. Outputs require human review.',
   path = '/',
   styles = '',
   body,
