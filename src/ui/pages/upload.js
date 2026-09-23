@@ -1,10 +1,10 @@
-import { page } from '../layout.js';
+import { page, SITE_URL } from '../layout.js';
+import { escapeHtml } from '../escape.js';
 import { resolveSignTheme, signOverlayStyles, signOverlayHtml } from '../signOverlay.js';
 
 /**
- * A real sample of what the pipeline emits, rendered with the same components
- * the results page uses. Showing the artifact beats describing it — and because
- * it goes through signOverlayHtml, it cannot drift from the real output.
+ * Illustrative output rendered with the same components as the results page.
+ * This is authored example content, not evidence of real model inference.
  */
 const DEMO_THEME = resolveSignTheme('standard');
 const DEMO_SIGN = [
@@ -14,7 +14,7 @@ const DEMO_SIGN = [
 
 const DEMO_STRIP = `
     <section class="demo" aria-label="Example output">
-      <p class="demo-intro muted">One upload, three layers. This is what comes back:</p>
+      <p class="demo-intro muted">Illustrative output formats, not verified model results:</p>
       <div class="demo-grid">
         <div class="demo-col">
           <p class="demo-label">Captions <span class="muted">WebVTT · TTML</span></p>
@@ -43,14 +43,14 @@ const DEMO_STRIP = `
     </section>`;
 
 const EMBED_SNIPPET = `&lt;video src="my-talk.mp4" controls&gt;&lt;/video&gt;
-&lt;script src="https://inclusy.org/embed.js"
+&lt;script src="${escapeHtml(SITE_URL)}/embed.js"
         data-inclusy="YOUR_EMBED_ID"&gt;&lt;/script&gt;`;
 
 export function buildUploadPage() {
   return page({
-    title: 'Inclusy',
-    description: 'Upload any video or audio and get captions, audio descriptions, and sign language overlays. Open source, self-hostable, free.',
-    path: '/',
+    title: 'Media tools preview',
+    description: 'Explore experimental caption and media workflows. Mock providers are enabled by default; outputs require human review.',
+    path: '/media',
     styles: `
 ${signOverlayStyles(DEMO_THEME)}
 
@@ -124,16 +124,16 @@ ${signOverlayStyles(DEMO_THEME)}
     }`,
     body: `
     <section class="hero">
-      <h1>Make any media accessible.</h1>
-      <p class="tagline">Captions, AI audio descriptions, and sign language overlays from one upload. Free and open source.</p>
+      <h1>Media tools, in development.</h1>
+      <p class="tagline">Explore caption, description, and experimental sign-gloss workflows. Mock providers are enabled by default; this preview is not a production accessibility service.</p>
+      <p>Use non-sensitive test media only. Outputs need human review. Sign gloss is not sign-language interpretation and must not replace a qualified interpreter.</p>
       <div class="hero-actions">
         <a href="#upload" class="btn">Upload a file</a>
         <a href="/embed" class="btn-outline">Add it to your site</a>
       </div>
       <div class="hero-facts">
-        <span><strong>21</strong> caption languages</span>
-        <span><strong>10</strong> sign languages</span>
-        <span><strong>3</strong> accessibility layers</span>
+        <span><strong>Preview</strong> experimental workflows</span>
+        <span><strong>Review</strong> every output before use</span>
         <span><strong>MIT</strong> open source</span>
       </div>
     </section>
@@ -162,7 +162,7 @@ ${DEMO_STRIP}
         <div class="progress-bar" id="uploadProgress" style="display:none" aria-hidden="true">
           <div class="fill" id="uploadFill"></div>
         </div>
-        <p class="muted small">Your file and results are deleted after 24 hours unless you publish an embed.</p>
+        <p class="muted small">Do not upload confidential or personal records. Retention and deletion depend on the deployment configuration; publishing an embed makes its outputs publicly accessible.</p>
       </form>
     </section>
 
@@ -172,17 +172,17 @@ ${DEMO_STRIP}
         <div class="step">
           <div class="step-number">1</div>
           <h3>Upload</h3>
-          <p>Any video or audio file. Nothing to install, no account.</p>
+          <p>Choose a supported, non-sensitive test file or use the sample.</p>
         </div>
         <div class="step">
           <div class="step-number">2</div>
           <h3>Process</h3>
-          <p>Speech is transcribed, visuals are described, and sign gloss is generated per segment.</p>
+          <p>Explore the configured pipeline. Mock providers return illustrative data rather than analyzing your media.</p>
         </div>
         <div class="step">
           <div class="step-number">3</div>
           <h3>Use it</h3>
-          <p>Download the files, share a player link, or embed the whole layer on your own site.</p>
+          <p>Inspect draft outputs. Verify accuracy, timing, and suitability before sharing or publishing.</p>
         </div>
       </div>
     </section>
@@ -192,26 +192,26 @@ ${DEMO_STRIP}
       <div class="feature-grid">
         <div class="feature">
           <h3>Captions</h3>
-          <p>WebVTT and TTML. Standard, simplified, or verbatim. Translatable to 21 languages.</p>
+          <p>WebVTT and TTML export workflows. Accuracy and translation availability depend on the configured providers.</p>
         </div>
         <div class="feature">
           <h3>Audio descriptions</h3>
-          <p>Narration of what's on screen, written into the gaps between dialogue.</p>
+          <p>Experimental description segments. Verify visual accuracy, timing, and any generated narration before use.</p>
         </div>
         <div class="feature">
           <h3>Sign language</h3>
-          <p>Gloss tokens and sign cards for 10 sign languages, with six overlay themes including high contrast.</p>
+          <p>Experimental gloss tokens and sign cards, not validated sign-language translation or interpretation.</p>
         </div>
         <div class="feature">
           <h3>Self-hostable</h3>
-          <p>Run the whole pipeline on your own hardware with whisper.cpp and Ollama. No API costs, nothing leaves your machine.</p>
+          <p>Inspect and run the open-source application yourself. Data handling and provider costs depend on your configuration.</p>
         </div>
       </div>
     </section>
 
     <section class="section">
       <h2>Add it to your site</h2>
-      <p>Publish a processed file and you get an embed ID. One script tag attaches captions, audio description, and the sign overlay to a video you already host — we never serve your media.</p>
+      <p>Publishing makes generated outputs publicly accessible through an embed ID. Review them first. The script can accompany a video on your site; it does not remediate the rest of your website.</p>
       <pre class="snippet">${EMBED_SNIPPET}</pre>
       <a href="/embed" class="btn-outline">Read the embed docs</a>
     </section>`,

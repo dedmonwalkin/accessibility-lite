@@ -52,11 +52,13 @@ export function signOverlayStyles(theme) {
   }
   .sign-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
   .sign-header .pill { color: var(--sign-text); border-color: var(--sign-accent); }
+  .sign-overlay .muted { color: var(--sign-text); }
+  .sign-overlay :focus-visible { outline-color: var(--sign-accent); }
   .theme-select {
-    background: rgba(0,0,0,0.35); color: inherit;
+    background: var(--sign-bg); color: var(--sign-text);
     border: 1px solid var(--sign-accent); border-radius: 8px;
     padding: 6px 10px; font: inherit; font-size: 0.9rem; cursor: pointer;
-    width: auto;
+    width: auto; max-width: 100%; min-height: 44px;
   }
   .sign-segments { display: flex; flex-direction: column; gap: 8px; }
   .sign-segments.layout-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
@@ -68,7 +70,7 @@ export function signOverlayStyles(theme) {
     padding: 4px 9px; border-radius: 6px; letter-spacing: 0.04em;
     font-weight: var(--sign-font-weight);
   }
-  .sign-facial-cue { font-size: 0.75em; color: var(--sign-accent); margin-left: 4px; }`;
+  .sign-facial-cue { font-size: max(0.875rem, 0.75em); color: var(--sign-text); margin-left: 4px; }`;
 }
 
 export function backgroundClass(theme) {
@@ -123,7 +125,7 @@ export function signOverlayHtml({ theme, segments, signLanguage, ariaLabel, them
 
   return `<div class="sign-overlay${backgroundClass(theme)}" id="signOverlay" role="region" aria-label="${escapeHtml(ariaLabel)}">
       <div class="sign-header">
-        <span class="pill">Sign language — ${escapeHtml(signLanguage)}${themeSelect ? '' : ` — ${escapeHtml(theme.name)}`}</span>
+        <span class="pill">Experimental sign gloss: ${escapeHtml(signLanguage)}${themeSelect ? '' : ` / ${escapeHtml(theme.name)}`}</span>
         ${select}
       </div>
       <div class="sign-segments${layoutClass(theme)}"${segmentsId ? ` id="${segmentsId}" aria-live="polite"` : ''}>${signSegmentsHtml(shown)}

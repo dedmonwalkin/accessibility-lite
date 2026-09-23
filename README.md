@@ -1,6 +1,15 @@
-# Inclusy
+# Whakauru
 
-Open source accessibility pipeline, running at **[inclusy.org](https://inclusy.org)**. Upload any video or audio file and get **captions**, **AI audio descriptions**, and **sign language overlays** — all from a single tool. Then add the whole layer to your own site with one script tag.
+**Nobody gets left off the map.** A consulting/service website and a separate
+experimental open-source media workbench. This checkout is being rebranded from
+Inclusy to Whakauru; the repository and integration identifiers stay unchanged.
+The intended public origin is `https://whakauru.com`, not a claim of deployment.
+
+For the isolated service-site candidate, run `npm run start:service` and read
+[SERVICE-ONLY.md](SERVICE-ONLY.md). Contact defaults to `bob@whakauru.com`.
+`npm start` runs the full media app, whose authorization and privacy launch gates
+remain open. Mock providers are the default; outputs require human review and
+experimental sign gloss is not sign-language interpretation.
 
 ## Why this exists
 
@@ -46,14 +55,18 @@ Process a file, press **Publish and get embed code** on the results page, and pa
 
 ```html
 <video src="my-talk.mp4" controls></video>
-<script src="https://inclusy.org/embed.js"
+<script src="https://your-media-host.example/embed.js"
         data-inclusy="YOUR_EMBED_ID"
         data-lang="en-US"
         data-sign="on"
         data-ad="panel"></script>
 ```
 
-**Inclusy never serves your media.** The embed sends only the accessibility layer — a few kilobytes of caption, description, and sign data — so your video stays on your own host. There is no bandwidth cost, and published embeds are exempt from the 24-hour job expiry.
+These are self-hosting examples, not live Whakauru endpoints. Keep the legacy
+`data-inclusy` attribute for compatibility. Published outputs are public, and the
+full app can also serve uploaded media. Review hosting costs, retention and
+access controls before publishing; the service-only server exposes none of these
+media routes.
 
 | Attribute | Default | Description |
 |-----------|---------|-------------|
@@ -67,7 +80,7 @@ Process a file, press **Publish and get embed code** on the results page, and pa
 For platforms that strip `<script>` tags (Squarespace, Notion, most newsletter tools), use the iframe instead:
 
 ```html
-<iframe src="https://inclusy.org/embed/YOUR_EMBED_ID?src=https://yoursite.com/my-talk.mp4"
+<iframe src="https://your-media-host.example/embed/YOUR_EMBED_ID?src=https://yoursite.com/my-talk.mp4"
         width="100%" height="480" allowfullscreen title="Accessible player"></iframe>
 ```
 
@@ -78,7 +91,9 @@ Two decisions shape the script:
 - **Cues are injected programmatically** with `addTextTrack` + `VTTCue`, not via a cross-origin `<track src>`. A cross-origin track would require `crossorigin="anonymous"` on your `<video>`, which forces CORS on your media too and breaks videos served from a CDN without those headers.
 - **The overlay lives in a shadow root**, anchored to the video's own box. Your CSS can't break it, its CSS can't break your page, and it modifies nothing in your DOM.
 
-It's hand-written with no build step, ships at ~3.8KB gzipped, and never throws into the host page — every failure path warns to the console and no-ops. Because the base URL is derived from the script's own `src`, a self-hosted instance talks to itself rather than to inclusy.org.
+It's hand-written with no build step. Because the base URL is derived from the
+script's own `src`, a self-hosted instance talks to that host rather than a
+hard-coded public domain.
 
 Captions are a native text track, so they keep working in fullscreen and with the browser's own caption UI. The sign and description overlay is a DOM layer, so it does not follow the video into fullscreen.
 
@@ -238,7 +253,8 @@ Publishing triggers an immediate Postgres snapshot. This matters on Fly, where `
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SITE_URL` | `https://inclusy.org` | Public origin, used for canonical/OG tags and generated snippets |
+| `SITE_URL` | `https://whakauru.com` | Intended public origin for canonical/OG tags and generated snippets; override for your deployment |
+| `CONTACT_EMAIL` | `bob@whakauru.com` | Plain mailbox for general and accessibility enquiries; empty/invalid values hide both links |
 
 ## Tests
 

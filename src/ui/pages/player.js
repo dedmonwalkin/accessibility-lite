@@ -1,4 +1,6 @@
 import { escapeHtml } from '../escape.js';
+import { scriptJson } from '../scriptJson.js';
+import { MEDIA_NOTICE } from '../mediaNotice.js';
 import { page } from '../layout.js';
 import { resolveSignTheme, signOverlayStyles, signOverlayHtml, signThemeScript, segmentMs } from '../signOverlay.js';
 
@@ -49,7 +51,7 @@ export function buildPlayerPage(job, outputs) {
 
   return page({
     title: job.original_filename,
-    description: `Accessible player for ${job.original_filename} — captions, audio description, and sign language.`,
+    description: `Development media player for ${job.original_filename}: unverified captions, descriptions, and experimental sign gloss.`,
     path: `/player/${job.id}`,
     narrow: true,
     styles: `
@@ -76,7 +78,8 @@ ${signOverlayStyles(theme)}
     .dl-grid .btn-outline { font-size: var(--text-xs); padding: var(--s2) var(--s3); }`,
     body: `
     <h1>${escapeHtml(job.original_filename)}</h1>
-    <p class="subtitle">Accessible player · captions, audio description, and sign language</p>
+    <p class="subtitle">Development player: captions, descriptions, and experimental sign gloss</p>
+    ${MEDIA_NOTICE}
 
     <div class="panel" role="region" aria-label="Media player">${mediaTag}</div>
 
@@ -126,8 +129,8 @@ ${signThemeScript()}
 
     /* Captions are labelled "live", so they track playback rather than
        dumping the whole transcript at once. */
-    var captionCues = ${JSON.stringify(cueData(captions))};
-    var audioCues = ${JSON.stringify(cueData(audioDesc))};
+    var captionCues = ${scriptJson(cueData(captions))};
+    var audioCues = ${scriptJson(cueData(audioDesc))};
     var media = document.getElementById('mediaPlayer');
     var captionEl = document.getElementById('captions');
     var audioEl = document.getElementById('audio');

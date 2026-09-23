@@ -35,7 +35,7 @@ const config = runtimeConfig();
  */
 export function isPublicPath(method, pathname) {
   if (method !== 'GET') return false;
-  if (pathname === '/') return true;
+  if (pathname === '/' || pathname === '/media') return true;
   if (pathname === '/health') return true;
   if (pathname === '/v1/catalog') return true;
   if (pathname === '/embed' || pathname === '/embed.js') return true;
@@ -261,6 +261,10 @@ async function handleRequest(req, res) {
 
     // Upload page
     if (pathname === '/' && method === 'GET') {
+      return sendHtml(res, 200, uiService.buildHomePage({ contactEmail: process.env.CONTACT_EMAIL }));
+    }
+
+    if (pathname === '/media' && method === 'GET') {
       return sendHtml(res, 200, uiService.buildUploadPage());
     }
 
@@ -641,7 +645,7 @@ export async function start(port = config.port) {
 
   await new Promise((resolve) => server.listen(port, resolve));
   const boundPort = server.address().port;
-  console.log(`Inclusy running on http://localhost:${boundPort}`);
+  console.log(`Whakauru running on http://localhost:${boundPort}`);
   console.log(`Model provider: ${config.modelProvider}`);
   console.log(`Persistence: ${config.enablePostgres ? 'postgres' : 'in-memory only'}`);
 

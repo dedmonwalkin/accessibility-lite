@@ -1,4 +1,7 @@
 import { escapeHtml } from '../escape.js';
+import { scriptJson } from '../scriptJson.js';
+import { clipboardScript } from '../clipboard.js';
+import { MEDIA_NOTICE } from '../mediaNotice.js';
 import { page } from '../layout.js';
 import { langName } from './options.js';
 import { resolveSignTheme, signOverlayStyles, signOverlayHtml } from '../signOverlay.js';
@@ -49,6 +52,7 @@ ${signOverlayStyles(theme)}
     body: `
     <h1>Results</h1>
     <p class="subtitle">${escapeHtml(job.original_filename)}</p>
+    ${MEDIA_NOTICE}
 
     <div class="panel stats" role="region" aria-label="Summary statistics">
       <span class="stat"><strong>${captions.length}</strong> caption segments</span>
@@ -98,50 +102,38 @@ ${signOverlayStyles(theme)}
 
     <div class="panel" role="region" aria-label="Share link">
       <span class="pill">Share</span>
-      <p class="muted small">A player page anyone can open — no account needed.</p>
+      <p class="muted small">A player link for this deployment. Playback and downloads depend on its access settings and retention. Share only reviewed, non-sensitive material.</p>
       <div class="share-box">
         <input type="text" id="shareUrl" readonly aria-label="Shareable player URL" />
         <button type="button" class="btn" id="copyShare">Copy</button>
       </div>
+      <p id="copyShareStatus" role="status" aria-live="polite" aria-atomic="true"></p>
     </div>
 
     <div class="panel" role="region" aria-label="Embed on your site">
       <span class="pill">Embed</span>
-      <p class="muted small">Publish this result to get a permanent embed ID. Captions, audio description, and the sign overlay attach to a video you host yourself — we never serve your media, and published results are not deleted after 24 hours.</p>
+      <p class="muted small">Publishing makes these outputs publicly accessible through an embed ID. Review them first. Embeds use a video URL you supply; uploaded media may also be served by this deployment's player. Availability and retention depend on its storage and configuration.</p>
       <button type="button" class="btn" id="publishBtn">Publish and get embed code</button>
       <p class="error" id="publishError" style="display:none" aria-live="polite" role="alert"></p>
       <div id="embedResult" style="display:none" aria-live="polite">
-        <pre class="snippet" id="embedSnippet"></pre>
+        <pre class="snippet" id="embedSnippet" tabindex="0" role="region" aria-label="Embed code"></pre>
         <div class="share-box">
           <button type="button" class="btn" id="copyEmbed">Copy snippet</button>
           <a class="btn-outline" href="/embed" id="embedDocs">Embed docs</a>
         </div>
+        <p id="copyEmbedStatus" role="status" aria-live="polite" aria-atomic="true"></p>
       </div>
     </div>
 
-    <p><a href="/">← Process another file</a></p>`,
+    <p><a href="/media">← Process another file</a></p>`,
     scripts: `
-    var jobId = ${JSON.stringify(job.id)};
+    ${clipboardScript()}
+    var jobId = ${scriptJson(job.id)};
     var shareInput = document.getElementById('shareUrl');
     shareInput.value = window.location.origin + '/player/' + jobId;
 
-    function copyFrom(button, getText, label) {
-      button.addEventListener('click', function () {
-        var text = getText();
-        var done = function () {
-          button.textContent = 'Copied!';
-          setTimeout(function () { button.textContent = label; }, 2000);
-        };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(done, function () { done(); });
-        } else {
-          shareInput.select();
-          done();
-        }
-      });
-    }
-
-    copyFrom(document.getElementById('copyShare'), function () { return shareInput.value; }, 'Copy');
+    bindCopy(document.getElementById('copyShare'), shareInput, document.getElementById('copyShareStatus'));
+    bindCopy(document.getElementById('copyEmbed'), document.getElementById('embedSnippet'), document.getElementById('copyEmbedStatus'));
 
     var dlLanguage = document.getElementById('dlLanguage');
     dlLanguage.addEventListener('change', function () {
@@ -164,9 +156,6 @@ ${signOverlayStyles(theme)}
         document.getElementById('embedResult').style.display = 'block';
         document.getElementById('embedDocs').href = '/embed?id=' + encodeURIComponent(data.embed_id);
         publishBtn.textContent = 'Published';
-        copyFrom(document.getElementById('copyEmbed'), function () {
-          return document.getElementById('embedSnippet').textContent;
-        }, 'Copy snippet');
       } catch (err) {
         publishError.textContent = err.message;
         publishError.style.display = 'block';

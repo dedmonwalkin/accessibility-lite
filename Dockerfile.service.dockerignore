@@ -1,0 +1,14 @@
+**
+!package.json
+!src/
+!src/serviceServer.js
+!src/ui/
+!src/ui/layout.js
+!src/ui/tokens.js
+!src/ui/escape.js
+!src/ui/homeStyles.js
+!src/ui/projectPlanner.js
+!src/ui/pages/
+!src/ui/pages/home.js
+!public/
+!public/**

@@ -1,5 +1,6 @@
 import { escapeHtml, safeMediaUrl } from '../escape.js';
 import { page, SITE_URL } from '../layout.js';
+import { MEDIA_NOTICE } from '../mediaNotice.js';
 
 const OPTIONS = [
   ['data-inclusy', 'required', 'The embed ID you get from publishing a result.'],
@@ -29,8 +30,8 @@ export function buildEmbedDocsPage({ embedId = '' } = {}) {
         title="Accessible player"></iframe>`);
 
   return page({
-    title: 'Add Inclusy to your site',
-    description: 'One script tag adds captions, audio descriptions, and a sign language overlay to a video you already host.',
+    title: 'Add Whakauru to your site',
+    description: 'Development media embed: unverified captions, descriptions, and experimental sign gloss for a video you host.',
     path: '/embed',
     narrow: true,
     styles: `
@@ -49,8 +50,9 @@ export function buildEmbedDocsPage({ embedId = '' } = {}) {
     ol { max-width: var(--measure); padding-left: 1.2em; }
     ol li { margin-bottom: var(--s2); }`,
     body: `
-    <h1>Add Inclusy to your site</h1>
+    <h1>Add Whakauru to your site</h1>
     <p class="subtitle">One script tag. Captions, audio description, and a sign overlay on a video you already host.</p>
+    ${MEDIA_NOTICE}
 
     <section class="section">
       <h2>How it works</h2>
@@ -59,18 +61,18 @@ export function buildEmbedDocsPage({ embedId = '' } = {}) {
         <li>Paste the snippet onto the page that has your video.</li>
         <li>The script finds the video, attaches a real caption track, and draws the sign and description overlay on top.</li>
       </ol>
-      <p><strong>We never serve your video.</strong> Inclusy only sends the accessibility layer — a few kilobytes of caption, description, and sign data. Your media stays on your own host, so there is no bandwidth cost and nothing to migrate. Published embeds are not deleted after 24 hours.</p>
+      <p>The embed uses a video URL you supply and loads its output data from Whakauru. Uploads may also be served by the deployment's player. Publication makes outputs publicly accessible; costs, availability, retention, and deletion depend on the hosting configuration. Review the outputs and data-handling terms before publishing.</p>
     </section>
 
     <section class="section">
       <h2>Script tag</h2>
-      <pre class="snippet">${scriptSnippet}</pre>
-      <p class="muted small">Works on any page you can add a script to. The overlay renders in a shadow root, so your site's CSS can't break it and it can't break your site's CSS.</p>
+      <pre class="snippet" tabindex="0" role="region" aria-label="Script embed example">${scriptSnippet}</pre>
+      <p class="muted small">Your platform must allow this script and its network requests. A shadow root isolates many styles, but compatibility, layout, and keyboard behavior still need testing on the host page.</p>
     </section>
 
     <section class="section">
       <h2>Options</h2>
-      <div class="table-scroll">
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Embed options table">
         <table>
           <thead><tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">What it does</th></tr></thead>
           <tbody>
@@ -83,18 +85,18 @@ export function buildEmbedDocsPage({ embedId = '' } = {}) {
     <section class="section">
       <h2>iframe fallback</h2>
       <p>Some platforms strip <code>&lt;script&gt;</code> tags — Squarespace blocks, Notion, most newsletter tools. Use the iframe instead. Pass your video URL as <code>src</code>.</p>
-      <pre class="snippet">${iframeSnippet}</pre>
+      <pre class="snippet" tabindex="0" role="region" aria-label="Iframe embed example">${iframeSnippet}</pre>
     </section>
 
     <section class="section">
       <h2>Accessibility of the overlay itself</h2>
-      <p>The captions become a native text track, so they work with the browser's own caption UI and with screen readers. The description panel is a polite live region. The sign and description toggles are real buttons, reachable by keyboard, with <code>aria-pressed</code> state. The overlay honours <code>prefers-reduced-motion</code>. If anything fails to load, the script warns to the console and leaves your page exactly as it was.</p>
+      <p>The script adds a native caption track and a description live region. Its toggle buttons expose <code>aria-pressed</code> state. Verify keyboard operation, caption accuracy, assistive-technology behavior, and loading failures on the actual host page before use. This media layer does not repair the rest of a website or establish compliance.</p>
     </section>
 
     <section class="section">
       <h2>Don't have an embed ID yet?</h2>
       <p>${embedId ? `You're using <code>${id}</code>.` : 'Process a file first, then publish the result.'}</p>
-      <a href="/#upload" class="btn">Upload a file</a>
+      <a href="/media#upload" class="btn">Upload a file</a>
     </section>`
   });
 }
@@ -120,7 +122,7 @@ export function buildEmbedFramePage({ embedId, src, lang = '', sign = 'on', ad =
        <code>?src=https://yoursite.com/video.mp4</code>. Only http and https URLs are accepted.</p>`;
 
   return page({
-    title: 'Accessible player',
+    title: 'Development media player',
     path: `/embed/${embedId}`,
     compact: true,
     styles: `
@@ -131,13 +133,14 @@ export function buildEmbedFramePage({ embedId, src, lang = '', sign = 'on', ad =
     .error { color: #FF9B9B; padding: var(--s5); font-size: var(--text-sm); }
     .credit {
       position: absolute; right: 8px; top: 8px; z-index: 2147483001;
-      font-size: 11px; color: #A7B0BD; text-decoration: none;
-      background: rgba(14,17,22,0.75); padding: 3px 8px; border-radius: 999px;
+      font-size: 14px; color: #A7B0BD; text-decoration: none;
+      background: #0E1116; padding: 6px 8px; border-radius: 4px;
     }`,
     body: `
+    ${MEDIA_NOTICE}
     <div class="frame-wrap">
       ${bodyContent}
-      <a class="credit" href="${SITE_URL}/embed" target="_blank" rel="noopener">Inclusy</a>
+      <a class="credit" href="${SITE_URL}/embed" target="_blank" rel="noopener">Whakauru</a>
     </div>`
   });
 }

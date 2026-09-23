@@ -29,6 +29,17 @@ const AA_NON_TEXT = 3.0;
 for (const scheme of ['light', 'dark']) {
   const p = PALETTE[scheme];
 
+  test(`${scheme}: editorial colors and focus indicators clear contrast thresholds`, () => {
+    for (const background of [p.bg, p.surface, p.wash]) {
+      for (const foreground of [p.ink, p.inkMuted, p.accent, p.clay]) {
+        assert.ok(contrastRatio(foreground, background) >= AA_TEXT,
+          `${foreground} on ${background} is ${contrastRatio(foreground, background).toFixed(2)}:1`);
+      }
+      assert.ok(contrastRatio(p.border, background) >= AA_NON_TEXT,
+        `border on ${background} is ${contrastRatio(p.border, background).toFixed(2)}:1`);
+    }
+  });
+
   test(`${scheme}: body text clears AA on both surfaces`, () => {
     for (const background of [p.bg, p.surface]) {
       assert.ok(contrastRatio(p.ink, background) >= AA_TEXT,
@@ -70,5 +81,7 @@ test('sign overlay themes clear AA for text and gloss tokens', () => {
     const token = contrastRatio(theme.palette.primary, theme.palette.token_bg);
     assert.ok(text >= AA_TEXT, `${theme.id} text is ${text.toFixed(2)}:1`);
     assert.ok(token >= AA_TEXT, `${theme.id} gloss token is ${token.toFixed(2)}:1`);
+    const focus = contrastRatio(theme.palette.accent, theme.background.color);
+    assert.ok(focus >= AA_NON_TEXT, `${theme.id} focus is ${focus.toFixed(2)}:1`);
   }
 });

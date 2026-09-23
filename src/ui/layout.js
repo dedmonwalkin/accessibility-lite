@@ -1,14 +1,12 @@
 import { escapeHtml } from './escape.js';
 import { BASE_STYLES } from './tokens.js';
 
-export const SITE_URL = (process.env.SITE_URL || 'https://inclusy.org').replace(/\/$/, '');
+export const SITE_URL = (process.env.SITE_URL || 'https://whakauru.com').replace(/\/$/, '');
 
 const FAVICON_SVG = `data:image/svg+xml,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">' +
-  '<rect width="32" height="32" rx="7" fill="#0B4FD9"/>' +
-  '<circle cx="16" cy="11" r="4.5" fill="none" stroke="#fff" stroke-width="2.4"/>' +
-  '<rect x="6" y="19" width="20" height="2.6" rx="1.3" fill="#fff"/>' +
-  '<rect x="6" y="24" width="13" height="2.6" rx="1.3" fill="#fff" opacity="0.75"/>' +
+  '<rect width="32" height="32" rx="4" fill="#0B5D51"/>' +
+  '<path d="M7 23L13 9l6 14 6-14M7 16h18" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>' +
   '</svg>'
 )}`;
 
@@ -20,9 +18,9 @@ const PREFERENCE_BOOT = `
   (function () {
     try {
       var t = localStorage.getItem('inclusy-theme');
-      if (t) document.documentElement.setAttribute('data-theme', t);
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
       var s = localStorage.getItem('inclusy-text-size');
-      if (s) document.documentElement.setAttribute('data-text-size', s);
+      if (['normal', 'large', 'xlarge'].includes(s)) document.documentElement.setAttribute('data-text-size', s);
     } catch (e) {}
   })();`;
 
@@ -99,12 +97,12 @@ const CHROME_STYLES = `
   }
   .wordmark svg { width: 1.35em; height: 1.35em; }
   .site-nav { display: flex; gap: var(--s4); margin-left: auto; align-items: center; flex-wrap: wrap; }
-  .site-nav a { color: var(--ink-muted); text-decoration: none; font-size: var(--text-sm); font-weight: 700; }
+  .site-nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink-muted); text-decoration: none; font-size: var(--text-sm); font-weight: 700; }
   .site-nav a:hover { color: var(--ink); text-decoration: underline; }
 
   .pref-controls { display: flex; gap: var(--s2); }
   .pref-btn {
-    min-width: 3.25rem; padding: var(--s1) var(--s2);
+    min-width: 3.25rem; min-height: 44px; padding: var(--s1) var(--s2);
     border: 1px solid var(--border); border-radius: var(--radius);
     background: var(--surface); color: var(--ink);
     font: inherit; font-size: var(--text-xs); font-weight: 700;
@@ -132,23 +130,23 @@ const CHROME_STYLES = `
 
 function markSvg() {
   return '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">' +
-    '<rect width="32" height="32" rx="7" fill="var(--accent)"/>' +
-    '<circle cx="16" cy="11" r="4.5" fill="none" stroke="var(--on-accent)" stroke-width="2.4"/>' +
-    '<rect x="6" y="19" width="20" height="2.6" rx="1.3" fill="var(--on-accent)"/>' +
-    '<rect x="6" y="24" width="13" height="2.6" rx="1.3" fill="var(--on-accent)"/>' +
+    '<rect width="32" height="32" rx="4" fill="var(--accent)"/>' +
+    '<path d="M7 23L13 9l6 14 6-14M7 16h18" fill="none" stroke="var(--on-accent)" stroke-width="2" stroke-linejoin="round"/>' +
     '</svg>';
 }
 
-function header({ compact = false } = {}) {
+function header({ compact = false, mediaPreview = true } = {}) {
   if (compact) return '';
   return `
   <header class="site-header">
     <div class="inner">
-      <a class="wordmark" href="/">${markSvg()} Inclusy</a>
+      <a class="wordmark" href="/">${markSvg()} Whakauru</a>
       <nav class="site-nav" aria-label="Main">
-        <a href="/#upload">Upload</a>
-        <a href="/embed">Add to your site</a>
-        <a href="https://github.com/dedmonwalkin/accessibility-lite" target="_blank" rel="noopener">GitHub</a>
+        <a href="/#services">Services</a>
+        <a href="/#approach">Approach</a>
+        <a href="/#name">Our name</a>
+        ${mediaPreview ? '<a href="/media">Media preview</a>' : '<a href="/#accessibility">Accessibility</a>'}
+        <a href="/#contact">Contact</a>
         <div class="pref-controls">
           <button type="button" class="pref-btn" id="textSizeToggle" aria-label="Change text size">A</button>
           <button type="button" class="pref-btn" id="themeToggle" aria-label="Switch theme">Dark</button>
@@ -158,15 +156,15 @@ function header({ compact = false } = {}) {
   </header>`;
 }
 
-function footer({ compact = false } = {}) {
+function footer({ compact = false, mediaPreview = true } = {}) {
   if (compact) return '';
   return `
   <footer class="site-footer">
     <div class="inner">
-      <span>Open source, MIT licensed. Built by <a href="https://github.com/dedmonwalkin">Isabella &amp; Tan</a>.</span>
+      <span>Whakauru. Nobody gets left off the map.<br>Built by <a href="https://github.com/dedmonwalkin">Isabella &amp; Tan</a>.</span>
       <nav aria-label="Footer">
-        <a href="/embed">Add to your site</a>
-        <a href="https://github.com/dedmonwalkin/accessibility-lite" target="_blank" rel="noopener">Source</a>
+        <a href="/#accessibility">Accessibility</a>
+        ${mediaPreview ? '<a href="/embed">Media embed guide</a><a href="https://github.com/dedmonwalkin/accessibility-lite">Media source (MIT)</a>' : '<a href="/#contact">Contact</a>'}
       </nav>
     </div>
   </footer>`;
@@ -178,16 +176,17 @@ function footer({ compact = false } = {}) {
  */
 export function page({
   title,
-  description = 'Upload any video or audio and get captions, audio descriptions, and sign language overlays. Open source, self-hostable, free.',
+  description = 'Whakauru accessibility services in development and open-source media tools. Outputs require human review.',
   path = '/',
   styles = '',
   body,
   scripts = '',
   narrow = false,
   compact = false,
+  mediaPreview = true,
   head = ''
 }) {
-  const fullTitle = title === 'Inclusy' ? 'Inclusy' : `${title} — Inclusy`;
+  const fullTitle = title === 'Whakauru' ? 'Whakauru' : `${title} — Whakauru`;
   const canonical = `${SITE_URL}${path}`;
   return `<!doctype html>
 <html lang="en">
@@ -197,20 +196,16 @@ export function page({
   <title>${escapeHtml(fullTitle)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <link rel="canonical" href="${escapeHtml(canonical)}" />
-  <meta name="theme-color" content="#FBFAF8" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#0E1116" media="(prefers-color-scheme: dark)" />
-  <meta property="og:site_name" content="Inclusy" />
+  <meta name="theme-color" content="#FCFBF8" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#121713" media="(prefers-color-scheme: dark)" />
+  <meta property="og:site_name" content="Whakauru" />
   <meta property="og:title" content="${escapeHtml(fullTitle)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="${escapeHtml(canonical)}" />
-  <meta property="og:image" content="${SITE_URL}/static/og.png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${escapeHtml(fullTitle)}" />
   <meta name="twitter:description" content="${escapeHtml(description)}" />
-  <meta name="twitter:image" content="${SITE_URL}/static/og.png" />
   <link rel="icon" type="image/svg+xml" href="${FAVICON_SVG}" />
   <link rel="preload" href="/static/fonts/atkinson-400-latin.woff2" as="font" type="font/woff2" crossorigin />
 ${head}
@@ -219,11 +214,11 @@ ${head}
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-${header({ compact })}
-  <main class="container${narrow ? ' container--narrow' : ''}" id="main">
+${header({ compact, mediaPreview })}
+  <main class="container${narrow ? ' container--narrow' : ''}" id="main" tabindex="-1">
 ${body}
   </main>
-${footer({ compact })}
+${footer({ compact, mediaPreview })}
   <script>${PREFERENCE_CONTROLS_SCRIPT}</script>
 ${scripts ? `  <script>${scripts}</script>` : ''}
 </body>

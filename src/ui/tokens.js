@@ -1,5 +1,5 @@
 /**
- * Design tokens for Inclusy.
+ * Design tokens for Whakauru.
  *
  * Two rules govern everything here, and both exist because this is an
  * accessibility product where the site itself is the first demo:
@@ -8,39 +8,36 @@
  *   2. No opacity-dimmed text. Every muted value is a token whose contrast
  *      ratio against its own background has been measured.
  *
- * Measured ratios (light / dark):
- *   ink on bg          17.22 / 17.29   AAA
- *   ink-muted on bg     7.57 /  8.63   AAA
- *   accent on bg        6.42 /  9.15   AAA
- *   on-accent on accent 6.70 /  9.15   AAA
- *   border on bg        3.25 /  3.51   passes SC 1.4.11 (non-text, needs 3.0)
- *
- * `npm run check:contrast` recomputes these from this file. If you change a
- * color, run it.
+ * `npm test` checks text and control contrast in both themes. Run it whenever
+ * a color changes; decorative rules are not control boundaries.
  */
 
 export const PALETTE = {
   light: {
-    bg: '#FBFAF8',
+    bg: '#FCFBF8',
     surface: '#FFFFFF',
-    ink: '#14171C',
-    inkMuted: '#4A525E',
-    accent: '#0B4FD9',
+    ink: '#16130F',
+    inkMuted: '#514A40',
+    accent: '#0B5D51',
     onAccent: '#FFFFFF',
-    border: '#858C96',
-    rule: '#E4E2DE',
+    border: '#82786B',
+    rule: '#DED8CE',
+    clay: '#98431E',
+    wash: '#EEF2EB',
     danger: '#A81E1E',
     success: '#0F6B3F'
   },
   dark: {
-    bg: '#0E1116',
-    surface: '#161A21',
-    ink: '#F2F5F9',
-    inkMuted: '#A7B0BD',
-    accent: '#7CB8FF',
-    onAccent: '#0E1116',
-    border: '#616B7A',
-    rule: '#242A33',
+    bg: '#121713',
+    surface: '#19211C',
+    ink: '#F2F1E9',
+    inkMuted: '#BDC8BC',
+    accent: '#9BD7BE',
+    onAccent: '#10251B',
+    border: '#8D9B8E',
+    rule: '#354337',
+    clay: '#F0B18B',
+    wash: '#24372D',
     danger: '#FF9B9B',
     success: '#7EE2A8'
   }
@@ -57,6 +54,8 @@ function vars(scheme) {
     --on-accent: ${p.onAccent};
     --border: ${p.border};
     --rule: ${p.rule};
+    --clay: ${p.clay};
+    --wash: ${p.wash};
     --danger: ${p.danger};
     --success: ${p.success};`;
 }
@@ -85,7 +84,7 @@ const FONT_FACES = ['400', '700']
 export const BASE_STYLES = `${FONT_FACES}
 
   :root {
-    color-scheme: light dark;
+    color-scheme: light;
 ${vars('light')}
 
     /* Type scale — 18px base, 1.25 ratio. Nothing below 0.875rem (14px). */
@@ -103,16 +102,18 @@ ${vars('light')}
     --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
     --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px; --s9: 96px;
 
-    --radius: 10px;
+    --radius: 4px;
     --measure: 68ch;
     --page: 1120px;
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {${vars('dark')}
+      color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {${vars('dark')}
+    color-scheme: dark;
   }
 
   /* Text-size control. Scales the whole type system, not just body copy. */
