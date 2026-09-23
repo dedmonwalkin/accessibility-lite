@@ -9,7 +9,7 @@ primary_region = "iad"
 [env]
   PORT = "3000"
   NODE_ENV = "production"
-  SITE_URL = "https://whakauru.fly.dev"
+  SITE_URL = "https://whakauru.com"
   CONTACT_EMAIL = "bob@whakauru.com"
 
 [http_service]

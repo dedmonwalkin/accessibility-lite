@@ -23,12 +23,25 @@ is billed by Fly. The app region is not a data-residency commitment.
 
 ## Domain boundary
 
-Initially, `SITE_URL` is `https://whakauru.fly.dev`, the actual deployed origin.
-The code's default remains `https://whakauru.com` for the intended custom domain.
-Domain routing requires separate owner approval, certificate setup, website DNS
-changes and HTTPS verification. Change `SITE_URL` after that cutover. Do not
-change MX, mail authentication records or Porkbun mailbox settings. No `.org`
-redirect is implied by deploying this app.
+The owner authorized connecting `whakauru.com` after the initial Fly-hostname
+release. `SITE_URL` is now `https://whakauru.com`, matching the code default.
+Fly manages certificates for both `whakauru.com` and `www.whakauru.com`.
+The `www` hostname serves the same site with the apex canonical URL, not an
+application-level redirect. The Fly hostname remains available as a fallback.
+
+Website DNS at Porkbun (TTL 600):
+
+| Type | Host | Value |
+| --- | --- | --- |
+| A | @ | 66.241.125.183 |
+| AAAA | @ | 2a09:8280:1::198:7300:0 |
+| CNAME | www | whakauru.com |
+
+The former apex ALIAS pointed to `uixie.porkbun.com`; `www` previously inherited
+the existing wildcard CNAME to that host. The wildcard and existing TXT records
+were retained. MX, SPF, DKIM, DMARC, nameservers and Porkbun mailbox settings must
+not be changed by website releases. No `.org` routing or redirect is included.
+Verify certificate issuance and public HTTPS before calling a cutover complete.
 
 ## Rollback
 
