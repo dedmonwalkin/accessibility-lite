@@ -17,7 +17,7 @@ export const SIGN_OVERLAY_THEMES = [
   {
     id: 'standard',
     name: 'Standard',
-    description: 'Clean, small 2D character signer with a dark translucent background',
+    description: 'Experimental gloss tokens on a dark background; no animated interpreter',
     signer_style: 'avatar_2d_clean',
     size: 'small',
     background: { style: 'solid', color: '#1a1a2e', opacity: 0.85 },
@@ -29,7 +29,7 @@ export const SIGN_OVERLAY_THEMES = [
   {
     id: 'realistic',
     name: 'Realistic',
-    description: 'Lifelike animated signer with warm tones and a solid dark background',
+    description: 'Warm-toned experimental gloss display; no lifelike signer is generated',
     signer_style: 'avatar_2d_realistic',
     size: 'medium',
     background: { style: 'solid', color: '#1c1410', opacity: 0.92 },
@@ -41,7 +41,7 @@ export const SIGN_OVERLAY_THEMES = [
   {
     id: 'kids',
     name: 'Kids',
-    description: 'Bright, expressive signer with large colorful tokens for younger viewers',
+    description: 'Large colorful experimental gloss tokens; suitability for children requires review',
     signer_style: 'avatar_2d_expressive',
     size: 'large',
     background: { style: 'gradient', color: '#1a0a3e', opacity: 0.9 },
@@ -53,7 +53,7 @@ export const SIGN_OVERLAY_THEMES = [
   {
     id: 'hands_only',
     name: 'Hands Only',
-    description: 'Hand sign symbols displayed on a subtle parchment-style background',
+    description: 'Experimental gloss text on a parchment-style background; not hand-sign animation',
     signer_style: 'hands_only',
     size: 'medium',
     background: { style: 'textured', color: '#f5f0e1', opacity: 0.93 },
@@ -65,19 +65,19 @@ export const SIGN_OVERLAY_THEMES = [
   {
     id: 'high_contrast',
     name: 'High Contrast',
-    description: 'Bold yellow-on-black palette optimized for color vision deficiencies',
+    description: 'Yellow-on-black experimental gloss display with high-contrast text',
     signer_style: 'avatar_2d_clean',
     size: 'large',
     background: { style: 'solid', color: '#000000', opacity: 1.0 },
     palette: { primary: '#ffd700', secondary: '#ffffff', accent: '#00e5ff', text: '#ffffff', token_bg: '#1a1a1a' },
     font: { family: '"IBM Plex Mono", monospace', weight: 700, size_scale: 1.2 },
     layout: 'column',
-    accessibility_notes: 'Designed for color vision deficiencies. WCAG AAA contrast ratio.'
+    accessibility_notes: 'Text palette contrast is tested; this is not a claim of overall conformance.'
   },
   {
     id: 'fun',
     name: 'Fun',
-    description: 'Playful monster-hand themed signs with a deep purple background',
+    description: 'Colorful experimental gloss tokens on a purple background; no animated signs',
     signer_style: 'avatar_2d_creature',
     size: 'medium',
     background: { style: 'gradient', color: '#1a0033', opacity: 0.9 },

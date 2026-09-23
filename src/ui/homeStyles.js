@@ -17,13 +17,11 @@ export const HOME_STYLES = `
   .access-figure { margin: 0; min-width: 0; background: radial-gradient(ellipse at center, var(--wash), transparent 72%); }
   .access-drawing { width: 100%; height: auto; display: block; color: var(--border); }
   .drawing-grid { opacity: .45; }
-  .drawing-arch { stroke-width: 2; }
-  .drawing-back { fill: var(--surface); stroke: var(--border); }
-  .drawing-middle { fill: var(--wash); stroke: var(--accent); }
-  .drawing-front { fill: var(--surface); stroke: var(--clay); }
-  .drawing-ground { stroke: var(--border); stroke-width: 1; fill: none; }
+  .map-surface { fill: var(--wash); stroke: var(--accent); stroke-width: 1.5; }
+  .map-graticule { fill: none; stroke: var(--accent); stroke-width: 1; opacity: .35; }
   .drawing-route { stroke: var(--clay); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-  .drawing-dot { fill: var(--clay); }
+  .map-stops { fill: var(--surface); stroke: var(--clay); stroke-width: 3; }
+  .map-destination { fill: none; stroke: var(--clay); stroke-width: 1.5; }
   .access-figure figcaption { border-top: 1px solid var(--border); padding-top: var(--s4); margin-top: var(--s3); font-size: var(--text-sm); color: var(--ink-muted); }
   .figure-number { display: block; color: var(--clay); font-family: var(--font-mono); font-size: var(--text-xs); margin-bottom: var(--s1); }
   .principle-strip { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s3) var(--s5); border-block: 1px solid var(--border); padding: var(--s4) 0; font-size: var(--text-sm); color: var(--ink-muted); }
@@ -67,7 +65,10 @@ export const HOME_STYLES = `
   .media-band .btn-outline { margin-top: var(--s3); }
   .media-notes { border-left: 1px solid var(--border); padding-left: var(--s6); align-self: center; }
   .media-notes p { font-size: var(--text-sm); color: var(--ink-muted); }
-  .boundaries, .accessibility-section { display: grid; grid-template-columns: 1fr 1.2fr; gap: var(--s7); }
+  .boundaries, .accessibility-section, .name-section { display: grid; grid-template-columns: 1fr 1.2fr; gap: var(--s7); }
+  .name-copy > p { color: var(--ink-muted); }
+  .name-note { padding: var(--s5); background: var(--wash); border-left: 3px solid var(--clay); margin-top: var(--s6); }
+  .name-note a { font-size: var(--text-sm); }
   .boundary-copy p, .accessibility-section p:not(.eyebrow) { color: var(--ink-muted); }
   .contact-section { display: grid; grid-template-columns: 1.25fr 1fr; gap: var(--s8); padding: var(--s8) 0 var(--s7); }
   .contact-address { display: inline-block; font-family: var(--serif); font-size: var(--text-xl); margin-top: var(--s3); }
@@ -83,7 +84,7 @@ export const HOME_STYLES = `
   @media (max-width: 850px) {
     .civic-hero { gap: var(--s5); grid-template-columns: 1.3fr 1fr; }
     .evidence-section { gap: var(--s6); }
-    .section-intro, .boundaries, .accessibility-section, .contact-section { grid-template-columns: 1fr; gap: var(--s4); }
+    .section-intro, .boundaries, .accessibility-section, .name-section, .contact-section { grid-template-columns: 1fr; gap: var(--s4); }
     .media-band { padding: var(--s5); gap: var(--s5); }
   }
   @media (max-width: 640px) {

@@ -645,7 +645,7 @@ export async function start(port = config.port) {
 
   await new Promise((resolve) => server.listen(port, resolve));
   const boundPort = server.address().port;
-  console.log(`Inclusy running on http://localhost:${boundPort}`);
+  console.log(`Whakauru running on http://localhost:${boundPort}`);
   console.log(`Model provider: ${config.modelProvider}`);
   console.log(`Persistence: ${config.enablePostgres ? 'postgres' : 'in-memory only'}`);
 

@@ -3,7 +3,7 @@ import { escapeHtml } from '../escape.js';
 import { HOME_STYLES } from '../homeStyles.js';
 import { PROJECT_OPTIONS, projectOutline, plannerScript } from '../projectPlanner.js';
 
-export function buildHomePage({ contactEmail = 'bob@inclusy.org' } = {}) {
+export function buildHomePage({ contactEmail = 'bob@whakauru.com', mediaPreview = true } = {}) {
   const email = typeof contactEmail === 'string' ? contactEmail.trim() : '';
   const validEmail = /^[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/.test(email);
   const contact = validEmail
@@ -11,17 +11,18 @@ export function buildHomePage({ contactEmail = 'bob@inclusy.org' } = {}) {
     : '<p>Client enquiries are not open yet. Our contact process is being prepared.</p>';
 
   return page({
-    title: 'Accessibility for the people you serve',
+    title: 'Nobody gets left off the map',
     description: 'Practical accessibility examination and remediation planning for public-facing websites, documents, and media. Clear evidence. Useful next steps.',
     path: '/',
+    mediaPreview,
     styles: HOME_STYLES,
     body: `
     <div class="civic-home">
       <section class="civic-hero" aria-labelledby="home-title">
         <div class="hero-copy">
           <p class="eyebrow">Digital accessibility / Public-facing services</p>
-          <h1 id="home-title">Public services.<br>Open to <em>everyone.</em></h1>
-          <p class="hero-lede">Find the barriers. Understand the impact.<br>Make a plan to put things right.</p>
+          <h1 id="home-title">Nobody gets<br>left off <em>the map.</em></h1>
+          <p class="hero-lede">Find out where you stand.<br>Then make a plan to put things right.</p>
           <p class="hero-description">Accessibility examination and remediation support in development for municipalities, public bodies, and organizations. Starting with the websites, documents, and media people rely on.</p>
           <div class="civic-actions">
             <a class="btn" href="#contact">Discuss your project <span aria-hidden="true">&#8599;</span></a>
@@ -32,14 +33,14 @@ export function buildHomePage({ contactEmail = 'bob@inclusy.org' } = {}) {
           <svg viewBox="0 0 420 370" aria-hidden="true" focusable="false" class="access-drawing">
             <defs><pattern id="access-grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M 24 0 L 0 0 0 24" fill="none" stroke="currentColor" stroke-width=".6"/></pattern></defs>
             <rect x="1" y="1" width="418" height="368" fill="url(#access-grid)" class="drawing-grid"/>
-            <path d="M48 302 V119 Q48 39 128 39 Q208 39 208 119 V302" class="drawing-arch drawing-back"/>
-            <path d="M133 302 V148 Q133 68 213 68 Q293 68 293 148 V302" class="drawing-arch drawing-middle"/>
-            <path d="M218 302 V177 Q218 97 298 97 Q378 97 378 177 V302" class="drawing-arch drawing-front"/>
-            <path d="M28 302 H396 M28 322 H396" class="drawing-ground"/>
-            <path d="M74 344 C130 344 137 274 206 274 H322 M307 261 L322 274 L307 287" class="drawing-route"/>
-            <circle cx="74" cy="344" r="5" class="drawing-dot"/>
+            <ellipse cx="210" cy="180" rx="174" ry="138" class="map-surface"/>
+            <g class="map-graticule"><ellipse cx="210" cy="180" rx="108" ry="138"/><ellipse cx="210" cy="180" rx="44" ry="138"/><path d="M36 180H384 M55 118H365 M55 242H365 M210 42V318"/></g>
+            <path d="M76 213 C115 213 100 110 156 110 S199 213 245 213 S272 288 333 288" class="drawing-route"/>
+            <g class="map-stops"><circle cx="76" cy="213" r="7"/><circle cx="156" cy="110" r="7"/><circle cx="245" cy="213" r="7"/><circle cx="333" cy="288" r="7"/></g>
+            <circle cx="333" cy="288" r="20" class="map-destination"/>
+            <path d="M333 252V260 M333 316V324 M297 288H305 M361 288H369" class="map-destination"/>
           </svg>
-          <figcaption><span class="figure-number">01 / Access by design</span><span>Different needs. A shared right to participate.</span></figcaption>
+          <figcaption><span class="figure-number">01 / Routes to participation</span><span>Different journeys. A place for everyone.</span></figcaption>
         </figure>
       </section>
 
@@ -72,7 +73,7 @@ export function buildHomePage({ contactEmail = 'bob@inclusy.org' } = {}) {
           </ol>
         </div>
         <aside class="finding-sheet" aria-labelledby="finding-title">
-          <div class="sheet-top"><span>Inclusy / Field notes</span><span>Illustrative example</span></div>
+          <div class="sheet-top"><span>Whakauru / Field notes</span><span>Illustrative example</span></div>
           <p class="finding-id">Finding 001 <span class="finding-status">Open / Not retested</span></p>
           <h3 id="finding-title">A resident cannot finish<br>the request form.</h3>
           <dl class="finding-details">
@@ -107,19 +108,24 @@ export function buildHomePage({ contactEmail = 'bob@inclusy.org' } = {}) {
         <p class="section-note">This guide helps scope a conversation. It does not determine legal obligations, deadlines, or compliance.</p>
       </section>
 
-      <section class="media-band" id="pipeline" aria-labelledby="pipeline-title">
-        <div><p class="eyebrow">The open-source workbench / Development preview</p><h2 id="pipeline-title">Better access to<br>what is said <em>and shown.</em></h2><p>Explore the media workflow behind Inclusy: caption formats, description segments, and experimental sign-gloss output.</p><a class="btn-outline" href="/media">Explore the media preview <span aria-hidden="true">&#8599;</span></a></div>
+      ${mediaPreview ? `<section class="media-band" id="pipeline" aria-labelledby="pipeline-title">
+        <div><p class="eyebrow">The open-source workbench / Development preview</p><h2 id="pipeline-title">Better access to<br>what is said <em>and shown.</em></h2><p>Explore the media workflow behind Whakauru: caption formats, description segments, and experimental sign-gloss output.</p><a class="btn-outline" href="/media">Explore the media preview <span aria-hidden="true">&#8599;</span></a></div>
         <div class="media-notes"><h3>Useful tools. Human judgment.</h3><p>Mock providers are enabled by default. Outputs need accuracy and accessibility review before publication.</p><p>Sign gloss is not sign-language interpretation. Self-hosting does not, by itself, establish privacy compliance or data residency.</p><a href="https://github.com/dedmonwalkin/accessibility-lite">Explore the source code</a></div>
-      </section>
+      </section>` : ''}
 
       <section class="civic-section boundaries" aria-labelledby="scope-title">
         <div><p class="eyebrow">Before an engagement</p><h2 id="scope-title">Trust starts with<br>clear boundaries.</h2></div>
         <div class="boundary-copy"><p>Agree the scope, deliverables, timetable, access needs, data handling, and fees in writing before work begins. Procurement requirements should be discussed, not assumed.</p><p>A scan or accessibility menu does not establish compliance. Our proposed deliverables are not legal advice, government certification, or a guarantee of compliance.</p><p>Our proposed reporting role is to prepare supporting evidence, not to certify on a client's behalf. Legal questions belong with qualified counsel.</p></div>
       </section>
 
+      <section class="civic-section name-section" id="name" aria-labelledby="name-title">
+        <div><p class="eyebrow">The name / The purpose</p><h2 id="name-title">Check the edge<br>of the frame.</h2></div>
+        <div class="name-copy"><p>The running joke about maps missing New Zealand inspired our promise: nobody gets left off the map.</p><p>Digital services can leave people out, too. A form that cannot be completed with a keyboard. A meeting without captions. A document that a screen reader cannot navigate. Our work starts by looking for the people and tasks a design has missed.</p><div class="name-note"><h3><span lang="mi">Whakauru</span></h3><p>Our name comes from te reo M&#257;ori. Te Aka M&#257;ori Dictionary includes the meanings <q>to include</q> and <q>to form an alliance</q>. Those meanings inform our focus on participation and working together.</p><a href="https://maoridictionary.co.nz/search?keywords=whakauru">Read the entry in Te Aka M&#257;ori Dictionary</a></div></div>
+      </section>
+
       <section class="civic-section accessibility-section" id="accessibility" aria-labelledby="accessibility-title">
         <div><p class="eyebrow">Access to this site</p><h2 id="accessibility-title">The conversation<br>should be accessible, too.</h2></div>
-        <div><p>Our design target is WCAG 2.2 Level AA. This site is under development; this is a target, not a conformance claim or independent certification.</p><p>Use the text-size and theme controls in the header, or your browser's zoom. The site includes keyboard focus indicators and respects reduced-motion preferences.</p><p>Found a barrier? Tell us the page, what you were trying to do, and your preferred way to receive a reply. Please leave out sensitive personal information.</p><a class="text-link" href="mailto:accessibility@inclusy.org">accessibility@inclusy.org <span aria-hidden="true">&#8599;</span></a></div>
+        <div><p>Our design target is WCAG 2.2 Level AA. This site is under development; this is a target, not a conformance claim or independent certification.</p><p>Use the text-size and theme controls in the header, or your browser's zoom. The site includes keyboard focus indicators and respects reduced-motion preferences.</p><p>Found a barrier? Tell us the page, what you were trying to do, and your preferred way to receive a reply. Please leave out sensitive personal information. Use the same contact below for accessibility enquiries.</p>${contact}</div>
       </section>
 
       <section class="contact-section" id="contact" aria-labelledby="contact-title">

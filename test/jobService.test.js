@@ -76,7 +76,7 @@ function multipartUpload(path, filename, content, mimeType) {
   });
 }
 
-describe('Inclusy API', () => {
+describe('Whakauru API', () => {
   let app;
 
   before(async () => {
@@ -101,7 +101,7 @@ describe('Inclusy API', () => {
     const res = await request('GET', '/');
     assert.equal(res.status, 200);
     assert.ok(res.headers['content-type'].includes('text/html'));
-    assert.ok(res.data.includes('id="home-title">Public services.'));
+    assert.ok(res.data.includes('id="home-title">Nobody gets'));
   });
 
   it('GET /v1/catalog returns accessibility catalog', async () => {

@@ -1,5 +1,5 @@
 /**
- * Design tokens for Inclusy.
+ * Design tokens for Whakauru.
  *
  * Two rules govern everything here, and both exist because this is an
  * accessibility product where the site itself is the first demo:

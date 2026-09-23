@@ -1,15 +1,37 @@
 # Service-first website draft
 
 Branch: `codex/inclusy-service-launch`, based on redesign commit `019c7cf`.
-Not deployed. Other Claude branches contain separate launch/security/inference
-work and need reconciliation before production release.
+The owner authorized the isolated service deployment on September 22, 2026.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the separate Fly app and release procedure.
+Other Claude branches contain separate launch/security/inference work and need
+reconciliation before any media release. Earlier records below are historical.
+
+## September 22 Whakauru rebrand
+
+The local website now uses Whakauru, "Nobody gets left off the map.", a
+cartographic hero and a dictionary-linked name story. The owner's reference
+HTML was synthesized into the existing accessible shell rather than replacing
+it. Unverified legal calculators, dates, capability promises, pronunciation and
+email aliases are excluded. Default SITE_URL is https://whakauru.com, not a
+claim that the domain is deployed. All enquiry links use bob@whakauru.com unless
+CONTACT_EMAIL is explicitly overridden.
+
+137 tests pass, including new identity/origin/compatibility checks. In-app
+browser checks verified 320/390/768/1280px reflow with enlarged text, both themes,
+skip-link focus transfer, and the keyboard project guide without observed console
+warnings/errors. No full screen-reader audit or new container build performed.
+The old social image is no longer advertised; a replacement remains to be made.
+Legacy embed attributes and preference keys, repo/branch names and deployment
+configuration are unchanged. No commit, push, merge, DNS or deployment this pass.
+
+## Service scope
 
 - `/` describes a proposed accessibility examination and remediation service.
 - `/media` keeps the upload tool, clearly marked experimental.
-- General contact defaults to the owner's verified `bob@inclusy.org` mailbox.
+- General contact defaults to the owner's verified `bob@whakauru.com` mailbox.
   `CONTACT_EMAIL` can override it with a plain mailbox address; an explicitly
-  empty or invalid value hides general enquiries. Accessibility enquiries use
-  the verified `accessibility@inclusy.org` forwarder. Syntax validation does not
+  empty or invalid value hides both enquiry links. Accessibility enquiries use
+  the same validated contact mailbox. Syntax validation does not
   establish service readiness, monitoring, or deliverability.
 - No legal certification, fully automatic remediation, real-inference, sign
   interpretation, or data-residency claims are made on the new homepage.
@@ -60,3 +82,19 @@ external fonts, analytics, or third-party requests were added to the homepage.
   separate security/inference branches remain launch review items.
 - Design checkpoint approved for a local commit on `codex/inclusy-service-launch`.
   No push or deployment is authorized by this checkpoint.
+
+## Follow-up accessibility and launch pass
+
+Design checkpoint committed as `774b1d2`. The subsequent local fixes and remaining
+release gates are recorded in [LAUNCH-REVIEW.md](LAUNCH-REVIEW.md).
+The expanded suite passes 128 tests and npm's production dependency audit reports
+zero known vulnerabilities. Neither result clears the outstanding browser media
+authentication, sensitive-data handling, or independent accessibility gates.
+
+## Consulting-only candidate
+
+The owner chose to separate the first consulting launch from media development.
+Use `npm run start:service` for this candidate, NOT `npm start`. See
+[SERVICE-ONLY.md](SERVICE-ONLY.md) for the route boundary, minimal container,
+134-test result, and production cutover gates. The local preview on port 4317
+now runs this service-only entry point. No production changes have been made.

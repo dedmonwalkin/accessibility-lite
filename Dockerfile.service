@@ -1,0 +1,15 @@
+FROM node:24-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# No npm dependencies, media server, providers, uploads or database code.
+COPY package.json ./
+COPY src/serviceServer.js src/serviceServer.js
+COPY src/ui/layout.js src/ui/tokens.js src/ui/escape.js src/ui/homeStyles.js src/ui/projectPlanner.js src/ui/
+COPY src/ui/pages/home.js src/ui/pages/home.js
+COPY public/ public/
+
+USER node
+EXPOSE 3000
+CMD ["node", "src/serviceServer.js"]

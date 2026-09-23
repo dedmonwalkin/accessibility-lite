@@ -1,4 +1,5 @@
-import { page } from '../layout.js';
+import { page, SITE_URL } from '../layout.js';
+import { escapeHtml } from '../escape.js';
 import { resolveSignTheme, signOverlayStyles, signOverlayHtml } from '../signOverlay.js';
 
 /**
@@ -42,7 +43,7 @@ const DEMO_STRIP = `
     </section>`;
 
 const EMBED_SNIPPET = `&lt;video src="my-talk.mp4" controls&gt;&lt;/video&gt;
-&lt;script src="https://inclusy.org/embed.js"
+&lt;script src="${escapeHtml(SITE_URL)}/embed.js"
         data-inclusy="YOUR_EMBED_ID"&gt;&lt;/script&gt;`;
 
 export function buildUploadPage() {

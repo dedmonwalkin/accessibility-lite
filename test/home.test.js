@@ -6,24 +6,25 @@ import { isPublicPath } from '../src/server.js';
 test('service homepage separates proposed engagements from media experiments', () => {
   const html = uiService.buildHomePage();
   assert.equal((html.match(/<h1\b/g) || []).length, 1);
-  for (const id of ['main', 'services', 'approach', 'project-plan', 'accessibility', 'contact']) {
+  for (const id of ['main', 'services', 'approach', 'project-plan', 'name', 'accessibility', 'contact']) {
     assert.ok(html.includes(`id="${id}"`));
   }
   assert.ok(html.includes('href="/media"'));
-  assert.ok(html.includes('href="mailto:bob@inclusy.org"'));
-  assert.ok(html.includes('href="mailto:accessibility@inclusy.org"'));
+  assert.equal((html.match(/href="mailto:bob@whakauru.com"/g) || []).length, 2);
   assert.ok(html.includes('not legal advice, government certification'));
   assert.ok(html.includes('A format example, not a client finding'));
   assert.ok(!html.includes('id="uploadForm"'));
 });
 
 test('only a valid configured mailbox enables contact', () => {
-  const html = uiService.buildHomePage({ contactEmail: ' hello@inclusy.org ' });
-  assert.ok(html.includes('href="mailto:hello@inclusy.org"'));
+  const html = uiService.buildHomePage({ contactEmail: ' enquiries@example.org ' });
+  assert.equal((html.match(/href="mailto:enquiries@example.org"/g) || []).length, 2);
+  assert.ok(!html.includes('mailto:bob@whakauru.com'));
   assert.ok(!html.includes('Client enquiries are not open yet'));
   for (const contactEmail of [null, 42, '', 'hello', 'a@b.org?bcc=x@y.org', 'a@b.org\r\nBcc:x@y.org', '\"><script>alert(1)</script>@b.org']) {
     const invalid = uiService.buildHomePage({ contactEmail });
     assert.ok(!invalid.includes('class="contact-address"'));
+    assert.ok(!invalid.includes('mailto:'));
     assert.ok(invalid.includes('Client enquiries are not open yet'));
   }
 });

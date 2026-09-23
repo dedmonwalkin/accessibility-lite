@@ -1,12 +1,12 @@
 import { escapeHtml } from './escape.js';
 import { BASE_STYLES } from './tokens.js';
 
-export const SITE_URL = (process.env.SITE_URL || 'https://inclusy.org').replace(/\/$/, '');
+export const SITE_URL = (process.env.SITE_URL || 'https://whakauru.com').replace(/\/$/, '');
 
 const FAVICON_SVG = `data:image/svg+xml,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">' +
   '<rect width="32" height="32" rx="4" fill="#0B5D51"/>' +
-  '<path d="M7 26V15a9 9 0 0 1 18 0v11M12 26V15a4 4 0 0 1 8 0v11" fill="none" stroke="#fff" stroke-width="2"/>' +
+  '<path d="M7 23L13 9l6 14 6-14M7 16h18" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>' +
   '</svg>'
 )}`;
 
@@ -131,20 +131,21 @@ const CHROME_STYLES = `
 function markSvg() {
   return '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">' +
     '<rect width="32" height="32" rx="4" fill="var(--accent)"/>' +
-    '<path d="M7 26V15a9 9 0 0 1 18 0v11M12 26V15a4 4 0 0 1 8 0v11" fill="none" stroke="var(--on-accent)" stroke-width="2"/>' +
+    '<path d="M7 23L13 9l6 14 6-14M7 16h18" fill="none" stroke="var(--on-accent)" stroke-width="2" stroke-linejoin="round"/>' +
     '</svg>';
 }
 
-function header({ compact = false } = {}) {
+function header({ compact = false, mediaPreview = true } = {}) {
   if (compact) return '';
   return `
   <header class="site-header">
     <div class="inner">
-      <a class="wordmark" href="/">${markSvg()} Inclusy</a>
+      <a class="wordmark" href="/">${markSvg()} Whakauru</a>
       <nav class="site-nav" aria-label="Main">
         <a href="/#services">Services</a>
         <a href="/#approach">Approach</a>
-        <a href="/media">Media preview</a>
+        <a href="/#name">Our name</a>
+        ${mediaPreview ? '<a href="/media">Media preview</a>' : '<a href="/#accessibility">Accessibility</a>'}
         <a href="/#contact">Contact</a>
         <div class="pref-controls">
           <button type="button" class="pref-btn" id="textSizeToggle" aria-label="Change text size">A</button>
@@ -155,16 +156,15 @@ function header({ compact = false } = {}) {
   </header>`;
 }
 
-function footer({ compact = false } = {}) {
+function footer({ compact = false, mediaPreview = true } = {}) {
   if (compact) return '';
   return `
   <footer class="site-footer">
     <div class="inner">
-      <span>Inclusy. Access to public life.<br>Built by <a href="https://github.com/dedmonwalkin">Isabella &amp; Tan</a>.</span>
+      <span>Whakauru. Nobody gets left off the map.<br>Built by <a href="https://github.com/dedmonwalkin">Isabella &amp; Tan</a>.</span>
       <nav aria-label="Footer">
         <a href="/#accessibility">Accessibility</a>
-        <a href="/embed">Media embed guide</a>
-        <a href="https://github.com/dedmonwalkin/accessibility-lite">Media source (MIT)</a>
+        ${mediaPreview ? '<a href="/embed">Media embed guide</a><a href="https://github.com/dedmonwalkin/accessibility-lite">Media source (MIT)</a>' : '<a href="/#contact">Contact</a>'}
       </nav>
     </div>
   </footer>`;
@@ -176,16 +176,17 @@ function footer({ compact = false } = {}) {
  */
 export function page({
   title,
-  description = 'Inclusy accessibility services in development and open-source media tools. Outputs require human review.',
+  description = 'Whakauru accessibility services in development and open-source media tools. Outputs require human review.',
   path = '/',
   styles = '',
   body,
   scripts = '',
   narrow = false,
   compact = false,
+  mediaPreview = true,
   head = ''
 }) {
-  const fullTitle = title === 'Inclusy' ? 'Inclusy' : `${title} — Inclusy`;
+  const fullTitle = title === 'Whakauru' ? 'Whakauru' : `${title} — Whakauru`;
   const canonical = `${SITE_URL}${path}`;
   return `<!doctype html>
 <html lang="en">
@@ -197,18 +198,14 @@ export function page({
   <link rel="canonical" href="${escapeHtml(canonical)}" />
   <meta name="theme-color" content="#FCFBF8" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#121713" media="(prefers-color-scheme: dark)" />
-  <meta property="og:site_name" content="Inclusy" />
+  <meta property="og:site_name" content="Whakauru" />
   <meta property="og:title" content="${escapeHtml(fullTitle)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="${escapeHtml(canonical)}" />
-  <meta property="og:image" content="${SITE_URL}/static/og.png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${escapeHtml(fullTitle)}" />
   <meta name="twitter:description" content="${escapeHtml(description)}" />
-  <meta name="twitter:image" content="${SITE_URL}/static/og.png" />
   <link rel="icon" type="image/svg+xml" href="${FAVICON_SVG}" />
   <link rel="preload" href="/static/fonts/atkinson-400-latin.woff2" as="font" type="font/woff2" crossorigin />
 ${head}
@@ -217,11 +214,11 @@ ${head}
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-${header({ compact })}
+${header({ compact, mediaPreview })}
   <main class="container${narrow ? ' container--narrow' : ''}" id="main" tabindex="-1">
 ${body}
   </main>
-${footer({ compact })}
+${footer({ compact, mediaPreview })}
   <script>${PREFERENCE_CONTROLS_SCRIPT}</script>
 ${scripts ? `  <script>${scripts}</script>` : ''}
 </body>

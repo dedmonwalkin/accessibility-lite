@@ -1,4 +1,6 @@
 import { escapeHtml } from '../escape.js';
+import { scriptJson } from '../scriptJson.js';
+import { MEDIA_NOTICE } from '../mediaNotice.js';
 import { page } from '../layout.js';
 import {
   SUPPORTED_OUTPUT_LANGUAGES,
@@ -79,12 +81,13 @@ export function buildOptionsPage(job) {
     body: `
     <h1>Accessibility options</h1>
     <p class="subtitle">${escapeHtml(job.original_filename)} · ${seconds}s · ${job.has_video ? 'Video' : 'Audio'}</p>
+    ${MEDIA_NOTICE}
 
     <form id="optionsForm">
       <div class="panel">
         <span class="pill">Captions</span>
         <label for="output_languages">Output languages</label>
-        <select name="output_languages" id="output_languages" multiple aria-required="true" aria-describedby="lang-hint">${langOptions}</select>
+        <select name="output_languages" id="output_languages" multiple required aria-required="true" aria-describedby="lang-hint">${langOptions}</select>
         <p id="lang-hint" class="muted small">Hold Command or Control to select more than one.</p>
 
         <label id="caption-style-label">Caption style</label>
@@ -126,7 +129,7 @@ export function buildOptionsPage(job) {
       </div>
     </form>`,
     scripts: `
-    var jobId = ${JSON.stringify(job.id)};
+    var jobId = ${scriptJson(job.id)};
 
     document.getElementById('optionsForm').addEventListener('submit', async function (e) {
       e.preventDefault();
