@@ -1,5 +1,14 @@
 # Consulting-only release candidate
 
+September 24 current state: **Working Access** is the selected brand and
+`https://workingaccess.org` the intended canonical origin. Local rebrand branch:
+`codex/working-access-rebrand`, based on `703e1df`. The prior `whakauru` app is
+paused with its only machine stopped and autostart disabled. No new image was
+deployed. DNS, mail settings and the old media app are unchanged. Contact remains
+`bob@whakauru.com` until a new mailbox is verified. Read [DEPLOYMENT.md](DEPLOYMENT.md)
+before any restart: existing old-domain routes still reach this same Fly app.
+The records below are historical checkpoints, not current deployment status.
+
 Consulting-only release, prepared September 19, 2026.
 
 September 22 release authorization: the owner approved commit, push and deployment

@@ -1,12 +1,14 @@
-# Whakauru
+# Working Access
 
 **Nobody gets left off the map.** A consulting/service website and a separate
 experimental open-source media workbench. This checkout is being rebranded from
-Inclusy to Whakauru; the repository and integration identifiers stay unchanged.
-The intended public origin is `https://whakauru.com`, not a claim of deployment.
+Whakauru to Working Access; repository and integration identifiers stay unchanged.
+The intended public origin is `https://workingaccess.org`, not a claim of deployment.
+The previous website is paused while this local rebrand is reviewed.
 
 For the isolated service-site candidate, run `npm run start:service` and read
 [SERVICE-ONLY.md](SERVICE-ONLY.md). Contact defaults to `bob@whakauru.com`.
+This verified mailbox is transitional; do not switch to an untested address.
 `npm start` runs the full media app, whose authorization and privacy launch gates
 remain open. Mock providers are the default; outputs require human review and
 experimental sign gloss is not sign-language interpretation.
@@ -62,7 +64,7 @@ Process a file, press **Publish and get embed code** on the results page, and pa
         data-ad="panel"></script>
 ```
 
-These are self-hosting examples, not live Whakauru endpoints. Keep the legacy
+These are self-hosting examples, not live Working Access endpoints. Keep the legacy
 `data-inclusy` attribute for compatibility. Published outputs are public, and the
 full app can also serve uploaded media. Review hosting costs, retention and
 access controls before publishing; the service-only server exposes none of these
@@ -253,7 +255,7 @@ Publishing triggers an immediate Postgres snapshot. This matters on Fly, where `
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SITE_URL` | `https://whakauru.com` | Intended public origin for canonical/OG tags and generated snippets; override for your deployment |
+| `SITE_URL` | `https://workingaccess.org` | Intended public origin for canonical/OG tags and generated snippets; override for your deployment |
 | `CONTACT_EMAIL` | `bob@whakauru.com` | Plain mailbox for general and accessibility enquiries; empty/invalid values hide both links |
 
 ## Tests

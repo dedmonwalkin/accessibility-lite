@@ -1,5 +1,5 @@
 /**
- * The Whakauru plugin, served at /embed.js. Legacy data-inclusy attributes
+ * The Working Access plugin, served at /embed.js. Legacy data-inclusy attributes
  * remain supported so existing integrations are not broken by the rebrand.
  *
  * Hand-written, no build step, no dependencies. Two decisions drive the shape
@@ -47,7 +47,7 @@ export function buildEmbedScript(baseUrl) {
   };
 
   function warn(message) {
-    if (window.console && console.warn) console.warn('[whakauru] ' + message);
+    if (window.console && console.warn) console.warn('[working-access] ' + message);
   }
 
   if (!cfg.id) return warn('Missing data-inclusy="EMBED_ID" on the script tag.');
@@ -100,7 +100,7 @@ export function buildEmbedScript(baseUrl) {
     var Cue = window.VTTCue || window.TextTrackCue;
     if (!Cue) return warn('This browser has no VTTCue support; captions skipped.');
 
-    var track = video.addTextTrack('captions', 'Whakauru captions', (cfg.lang || 'en').split('-')[0]);
+    var track = video.addTextTrack('captions', 'Working Access captions', (cfg.lang || 'en').split('-')[0]);
     for (var i = 0; i < cues.length; i++) {
       try {
         track.addCue(new Cue(cues[i].start, cues[i].end, cues[i].text));

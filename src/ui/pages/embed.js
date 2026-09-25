@@ -30,7 +30,7 @@ export function buildEmbedDocsPage({ embedId = '' } = {}) {
         title="Accessible player"></iframe>`);
 
   return page({
-    title: 'Add Whakauru to your site',
+    title: 'Add Working Access to your site',
     description: 'Development media embed: unverified captions, descriptions, and experimental sign gloss for a video you host.',
     path: '/embed',
     narrow: true,
@@ -50,7 +50,7 @@ export function buildEmbedDocsPage({ embedId = '' } = {}) {
     ol { max-width: var(--measure); padding-left: 1.2em; }
     ol li { margin-bottom: var(--s2); }`,
     body: `
-    <h1>Add Whakauru to your site</h1>
+    <h1>Add Working Access to your site</h1>
     <p class="subtitle">One script tag. Captions, audio description, and a sign overlay on a video you already host.</p>
     ${MEDIA_NOTICE}
 
@@ -61,7 +61,7 @@ export function buildEmbedDocsPage({ embedId = '' } = {}) {
         <li>Paste the snippet onto the page that has your video.</li>
         <li>The script finds the video, attaches a real caption track, and draws the sign and description overlay on top.</li>
       </ol>
-      <p>The embed uses a video URL you supply and loads its output data from Whakauru. Uploads may also be served by the deployment's player. Publication makes outputs publicly accessible; costs, availability, retention, and deletion depend on the hosting configuration. Review the outputs and data-handling terms before publishing.</p>
+      <p>The embed uses a video URL you supply and loads its output data from Working Access. Uploads may also be served by the deployment's player. Publication makes outputs publicly accessible; costs, availability, retention, and deletion depend on the hosting configuration. Review the outputs and data-handling terms before publishing.</p>
     </section>
 
     <section class="section">
@@ -140,7 +140,7 @@ export function buildEmbedFramePage({ embedId, src, lang = '', sign = 'on', ad =
     ${MEDIA_NOTICE}
     <div class="frame-wrap">
       ${bodyContent}
-      <a class="credit" href="${SITE_URL}/embed" target="_blank" rel="noopener">Whakauru</a>
+      <a class="credit" href="${SITE_URL}/embed" target="_blank" rel="noopener">Working Access</a>
     </div>`
   });
 }

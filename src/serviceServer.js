@@ -35,8 +35,8 @@ export function createServiceServer({ contactEmail = process.env.CONTACT_EMAIL }
   const home = buildHomePage({ contactEmail, mediaPreview: false });
   const missing = page({
     title: 'Page not found', mediaPreview: false, narrow: true,
-    description: 'Whakauru accessibility consulting.',
-    body: '<h1>Page not found</h1><p>This service website does not provide media uploads or player links.</p><p><a href="/">Return to Whakauru</a></p>'
+    description: 'Working Access accessibility consulting.',
+    body: '<h1>Page not found</h1><p>This service website does not provide media uploads or player links.</p><p><a href="/">Return to Working Access</a></p>'
   });
   const server = http.createServer(async (req, res) => {
     try {
@@ -67,7 +67,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const server = createServiceServer();
   const port = Number(process.env.PORT || 3000);
   server.on('error', err => { console.error('Service website could not start:', err.message); process.exitCode = 1; });
-  server.listen(port, () => console.log(`Whakauru service website: http://localhost:${server.address().port}`));
+  server.listen(port, () => console.log(`Working Access service website: http://localhost:${server.address().port}`));
   const shutdown = () => server.close();
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);

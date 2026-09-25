@@ -4,6 +4,7 @@ import { HOME_STYLES } from '../homeStyles.js';
 import { PROJECT_OPTIONS, projectOutline, plannerScript } from '../projectPlanner.js';
 
 export function buildHomePage({ contactEmail = 'bob@whakauru.com', mediaPreview = true } = {}) {
+  // Keep the verified mailbox until the new domain's email has been tested.
   const email = typeof contactEmail === 'string' ? contactEmail.trim() : '';
   const validEmail = /^[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/.test(email);
   const contact = validEmail
@@ -73,7 +74,7 @@ export function buildHomePage({ contactEmail = 'bob@whakauru.com', mediaPreview 
           </ol>
         </div>
         <aside class="finding-sheet" aria-labelledby="finding-title">
-          <div class="sheet-top"><span>Whakauru / Field notes</span><span>Illustrative example</span></div>
+          <div class="sheet-top"><span>Working Access / Field notes</span><span>Illustrative example</span></div>
           <p class="finding-id">Finding 001 <span class="finding-status">Open / Not retested</span></p>
           <h3 id="finding-title">A resident cannot finish<br>the request form.</h3>
           <dl class="finding-details">
@@ -109,7 +110,7 @@ export function buildHomePage({ contactEmail = 'bob@whakauru.com', mediaPreview 
       </section>
 
       ${mediaPreview ? `<section class="media-band" id="pipeline" aria-labelledby="pipeline-title">
-        <div><p class="eyebrow">The open-source workbench / Development preview</p><h2 id="pipeline-title">Better access to<br>what is said <em>and shown.</em></h2><p>Explore the media workflow behind Whakauru: caption formats, description segments, and experimental sign-gloss output.</p><a class="btn-outline" href="/media">Explore the media preview <span aria-hidden="true">&#8599;</span></a></div>
+        <div><p class="eyebrow">The open-source workbench / Development preview</p><h2 id="pipeline-title">Better access to<br>what is said <em>and shown.</em></h2><p>Explore the media workflow behind Working Access: caption formats, description segments, and experimental sign-gloss output.</p><a class="btn-outline" href="/media">Explore the media preview <span aria-hidden="true">&#8599;</span></a></div>
         <div class="media-notes"><h3>Useful tools. Human judgment.</h3><p>Mock providers are enabled by default. Outputs need accuracy and accessibility review before publication.</p><p>Sign gloss is not sign-language interpretation. Self-hosting does not, by itself, establish privacy compliance or data residency.</p><a href="https://github.com/dedmonwalkin/accessibility-lite">Explore the source code</a></div>
       </section>` : ''}
 
@@ -119,8 +120,8 @@ export function buildHomePage({ contactEmail = 'bob@whakauru.com', mediaPreview 
       </section>
 
       <section class="civic-section name-section" id="name" aria-labelledby="name-title">
-        <div><p class="eyebrow">The name / The purpose</p><h2 id="name-title">Check the edge<br>of the frame.</h2></div>
-        <div class="name-copy"><p>The running joke about maps missing New Zealand inspired our promise: nobody gets left off the map.</p><p>Digital services can leave people out, too. A form that cannot be completed with a keyboard. A meeting without captions. A document that a screen reader cannot navigate. Our work starts by looking for the people and tasks a design has missed.</p><div class="name-note"><h3><span lang="mi">Whakauru</span></h3><p>Our name comes from te reo M&#257;ori. Te Aka M&#257;ori Dictionary includes the meanings <q>to include</q> and <q>to form an alliance</q>. Those meanings inform our focus on participation and working together.</p><a href="https://maoridictionary.co.nz/search?keywords=whakauru">Read the entry in Te Aka M&#257;ori Dictionary</a></div></div>
+        <div><p class="eyebrow">Our purpose</p><h2 id="name-title">Access that works.<br>Work that matters.</h2></div>
+        <div class="name-copy"><p>People visit public websites to do something: report a problem, apply for a permit, read a council agenda, or follow a meeting. Access matters when those tasks work for the people who need them.</p><p>A form that cannot be completed with a keyboard. A meeting without captions. A document that a screen reader cannot navigate. Our work starts by looking for the people and tasks a design has missed.</p><div class="name-note"><h3>Why Working Access?</h3><p>The name keeps the focus on practical progress: find the barrier, agree the next step, and check whether the change helps. Not just a higher score. A service someone can use.</p></div></div>
       </section>
 
       <section class="civic-section accessibility-section" id="accessibility" aria-labelledby="accessibility-title">

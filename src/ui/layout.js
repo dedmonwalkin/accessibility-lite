@@ -1,7 +1,7 @@
 import { escapeHtml } from './escape.js';
 import { BASE_STYLES } from './tokens.js';
 
-export const SITE_URL = (process.env.SITE_URL || 'https://whakauru.com').replace(/\/$/, '');
+export const SITE_URL = (process.env.SITE_URL || 'https://workingaccess.org').replace(/\/$/, '');
 
 const FAVICON_SVG = `data:image/svg+xml,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">' +
@@ -140,11 +140,11 @@ function header({ compact = false, mediaPreview = true } = {}) {
   return `
   <header class="site-header">
     <div class="inner">
-      <a class="wordmark" href="/">${markSvg()} Whakauru</a>
+      <a class="wordmark" href="/">${markSvg()} Working Access</a>
       <nav class="site-nav" aria-label="Main">
         <a href="/#services">Services</a>
         <a href="/#approach">Approach</a>
-        <a href="/#name">Our name</a>
+        <a href="/#name">Our purpose</a>
         ${mediaPreview ? '<a href="/media">Media preview</a>' : '<a href="/#accessibility">Accessibility</a>'}
         <a href="/#contact">Contact</a>
         <div class="pref-controls">
@@ -161,7 +161,7 @@ function footer({ compact = false, mediaPreview = true } = {}) {
   return `
   <footer class="site-footer">
     <div class="inner">
-      <span>Whakauru. Nobody gets left off the map.<br>Built by <a href="https://github.com/dedmonwalkin">Isabella &amp; Tan</a>.</span>
+      <span>Working Access. Nobody gets left off the map.<br>Built by <a href="https://github.com/dedmonwalkin">Isabella &amp; Tan</a>.</span>
       <nav aria-label="Footer">
         <a href="/#accessibility">Accessibility</a>
         ${mediaPreview ? '<a href="/embed">Media embed guide</a><a href="https://github.com/dedmonwalkin/accessibility-lite">Media source (MIT)</a>' : '<a href="/#contact">Contact</a>'}
@@ -176,7 +176,7 @@ function footer({ compact = false, mediaPreview = true } = {}) {
  */
 export function page({
   title,
-  description = 'Whakauru accessibility services in development and open-source media tools. Outputs require human review.',
+  description = 'Working Access accessibility services in development and open-source media tools. Outputs require human review.',
   path = '/',
   styles = '',
   body,
@@ -186,7 +186,7 @@ export function page({
   mediaPreview = true,
   head = ''
 }) {
-  const fullTitle = title === 'Whakauru' ? 'Whakauru' : `${title} — Whakauru`;
+  const fullTitle = title === 'Working Access' ? 'Working Access' : `${title} — Working Access`;
   const canonical = `${SITE_URL}${path}`;
   return `<!doctype html>
 <html lang="en">
@@ -198,7 +198,7 @@ export function page({
   <link rel="canonical" href="${escapeHtml(canonical)}" />
   <meta name="theme-color" content="#FCFBF8" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#121713" media="(prefers-color-scheme: dark)" />
-  <meta property="og:site_name" content="Whakauru" />
+  <meta property="og:site_name" content="Working Access" />
   <meta property="og:title" content="${escapeHtml(fullTitle)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />
   <meta property="og:type" content="website" />

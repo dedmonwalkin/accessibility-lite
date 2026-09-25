@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { uiService } from '../src/services/uiService.js';
 
-test('Whakauru identity and sourced name story replace the old public brand', () => {
+test('Working Access identity and practical purpose replace the former name story', () => {
   const html = uiService.buildHomePage({ mediaPreview: false });
-  assert.match(html, /<title>Nobody gets left off the map.*Whakauru<\/title>/);
-  assert.match(html, /og:site_name" content="Whakauru"/);
-  assert.match(html, /lang="mi">Whakauru/);
-  assert.match(html, /href="https:\/\/maoridictionary.co.nz\/search\?keywords=whakauru"/);
+  assert.match(html, /<title>Nobody gets left off the map.*Working Access<\/title>/);
+  assert.match(html, /og:site_name" content="Working Access"/);
+  assert.match(html, /Why Working Access\?/);
+  assert.match(html, /Not just a higher score/);
+  assert.match(html, /href="\/#name">Our purpose/);
+  assert.doesNotMatch(html, /lang="mi"|maoridictionary|New Zealand|te reo|Whakauru/);
   assert.match(html, /Nobody gets left off the map/);
   assert.match(html, /<svg[^>]*aria-hidden="true"[^>]*focusable="false"/);
   // Stored preference keys are intentionally retained across the rebrand.
@@ -27,7 +29,7 @@ test('origin defaults to the new domain while self-hosted overrides remain suppo
       cwd: new URL('../', import.meta.url),
       env: { ...process.env, SITE_URL: origin }, encoding: 'utf8'
     });
-    const expected = origin || 'https://whakauru.com/';
+    const expected = origin || 'https://workingaccess.org/';
     assert.ok(html.includes(`rel="canonical" href="${expected}"`));
     assert.ok(html.includes(`property="og:url" content="${expected}"`));
   }
@@ -35,8 +37,19 @@ test('origin defaults to the new domain while self-hosted overrides remain suppo
 
 test('media presentation is rebranded without breaking legacy embed attributes', () => {
   for (const html of [uiService.buildUploadPage(), uiService.buildEmbedDocsPage()]) {
-    assert.match(html, /Whakauru/);
-    assert.doesNotMatch(html, /inclusy\.org|>Inclusy</);
+    assert.match(html, /Working Access/);
+    assert.doesNotMatch(html, /inclusy\.org|whakauru\.com|>Inclusy<|Whakauru/);
     assert.match(html, /data-inclusy=/);
   }
+});
+
+test('the rebrand retains verified email and legacy appearance preferences', () => {
+  const html = uiService.buildHomePage({ mediaPreview: false });
+  assert.equal((html.match(/mailto:bob@whakauru\.com/g) || []).length, 2);
+  assert.doesNotMatch(html, /mailto:[^"\s]*@workingaccess\.org/);
+  assert.match(html, /inclusy-theme/);
+  assert.match(html, /inclusy-text-size/);
+  const migrated = uiService.buildHomePage({ contactEmail: 'bob@workingaccess.org', mediaPreview: false });
+  assert.equal((migrated.match(/mailto:bob@workingaccess\.org/g) || []).length, 2);
+  assert.doesNotMatch(migrated, /whakauru/i);
 });

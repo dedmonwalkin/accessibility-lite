@@ -17,11 +17,20 @@ test('service-only homepage retains enquiries and guide, without media navigatio
   const html = await res.text();
   assert.match(html, /mailto:bob@whakauru\.com/);
   assert.doesNotMatch(html, /mailto:(?:hello|aoda|accessibility)@/);
-  assert.match(html, /Whakauru/);
+  assert.match(html, /Working Access/);
   assert.match(html, /id="projectPlanner"/);
   assert.match(html, /Media accessibility planning/);
   assert.doesNotMatch(html, /href="\/media|href="\/embed|id="pipeline"|Media preview/);
   assert.match(html, /id="main" tabindex="-1"/);
+});
+
+test('unknown service pages use the new identity without exposing media navigation', async () => {
+  const res = await fetch(base + '/missing-page');
+  assert.equal(res.status, 404);
+  const html = await res.text();
+  assert.match(html, /<title>Page not found.*Working Access<\/title>/);
+  assert.match(html, /Return to Working Access/);
+  assert.doesNotMatch(html, /Whakauru|whakauru\.com|href="\/media|href="\/embed/);
 });
 
 test('service health does not require persistence or provider setup', async () => {

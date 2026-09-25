@@ -1,6 +1,29 @@
 # Service-first website draft
 
-Branch: `codex/inclusy-service-launch`, based on redesign commit `019c7cf`.
+Current branch: `codex/working-access-rebrand`, based on service release `703e1df`.
+September 24: local Working Access rebrand; previous Whakauru deployment paused.
+The earlier launch records below retain their original scope and dates.
+
+## September 24 Working Access checkpoint
+
+Rebranded the shared page shell, metadata, purpose section, service errors and
+experimental media presentation without changing legacy embed attributes or
+stored preference keys. The intended canonical origin is workingaccess.org;
+the verified bob@whakauru.com mailbox stays until a replacement is tested.
+Preserved the map motif, tagline, service scope and experimental-media isolation.
+
+All 139 tests pass, including updated identity/origin assertions and new
+transitional-contact and service-404 coverage. Strict Fly config validation and
+Git diff whitespace checks pass. Browser checks at 320/390/768/1280px with maximum
+built-in text size found no horizontal overflow. Theme controls, visible skip
+link with focus transfer, and keyboard project-guide activation passed with no
+observed browser warnings/errors. No full screen-reader audit or container
+rebuild performed. Preview: http://localhost:4317.
+
+The former site's machine is stopped with autostart disabled. App, image and
+domain/mail configuration are preserved; no new deployment, DNS/mail changes,
+commit, push or merge. Working Access email and custom-domain cutover need
+verification and owner authorization before relaunch.
 The owner authorized the isolated service deployment on September 22, 2026.
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the separate Fly app and release procedure.
 Other Claude branches contain separate launch/security/inference work and need

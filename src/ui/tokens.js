@@ -1,5 +1,5 @@
 /**
- * Design tokens for Whakauru.
+ * Design tokens for Working Access.
  *
  * Two rules govern everything here, and both exist because this is an
  * accessibility product where the site itself is the first demo:

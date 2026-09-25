@@ -76,7 +76,7 @@ function multipartUpload(path, filename, content, mimeType) {
   });
 }
 
-describe('Whakauru API', () => {
+describe('Working Access API', () => {
   let app;
 
   before(async () => {
