@@ -3,8 +3,7 @@ import { escapeHtml } from '../escape.js';
 import { HOME_STYLES } from '../homeStyles.js';
 import { PROJECT_OPTIONS, projectOutline, plannerScript } from '../projectPlanner.js';
 
-export function buildHomePage({ contactEmail = 'bob@whakauru.com', mediaPreview = true } = {}) {
-  // Keep the verified mailbox until the new domain's email has been tested.
+export function buildHomePage({ contactEmail = 'bob@workingaccess.org', mediaPreview = true } = {}) {
   const email = typeof contactEmail === 'string' ? contactEmail.trim() : '';
   const validEmail = /^[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/.test(email);
   const contact = validEmail

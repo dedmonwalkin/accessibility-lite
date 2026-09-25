@@ -1,12 +1,14 @@
 # Consulting-only release candidate
 
 September 24 current state: **Working Access** is the selected brand and
-`https://workingaccess.org` the intended canonical origin. Local rebrand branch:
-`codex/working-access-rebrand`, based on `703e1df`. The prior `whakauru` app is
-paused with its only machine stopped and autostart disabled. No new image was
-deployed. DNS, mail settings and the old media app are unchanged. Contact remains
-`bob@whakauru.com` until a new mailbox is verified. Read [DEPLOYMENT.md](DEPLOYMENT.md)
-before any restart: existing old-domain routes still reach this same Fly app.
+`https://workingaccess.org` the approved canonical origin. Release branch:
+`codex/working-access-rebrand`, based on `703e1df`. After approving rebrand
+checkpoint `cd27bd9`, the owner authorized deployment, new-domain routing and
+retiring Whakauru to redirects. The owner confirms `bob@workingaccess.org` is
+tested; it is now the default contact. `REDIRECT_HOSTS` in `fly.service.toml`
+redirects old website hosts and the new www alias to the canonical origin.
+Health checks are excluded and writes are not redirected. Mail settings and
+the old media app stay unchanged. Read [DEPLOYMENT.md](DEPLOYMENT.md).
 The records below are historical checkpoints, not current deployment status.
 
 Consulting-only release, prepared September 19, 2026.

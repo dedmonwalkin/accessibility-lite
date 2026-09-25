@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { buildHomePage } from './ui/pages/home.js';
-import { page } from './ui/layout.js';
+import { page, SITE_URL } from './ui/layout.js';
 
 // Deliberately independent of server.js: no jobs, providers, database or timers.
 const ASSETS = new Map([
@@ -31,7 +31,12 @@ function respond(req, res, status, type, body, cache = 'no-cache') {
   res.end(req.method === 'HEAD' ? undefined : body);
 }
 
-export function createServiceServer({ contactEmail = process.env.CONTACT_EMAIL } = {}) {
+export function createServiceServer({
+  contactEmail = process.env.CONTACT_EMAIL,
+  redirectHosts = process.env.REDIRECT_HOSTS || ''
+} = {}) {
+  const retiredHosts = new Set(redirectHosts.split(',').map(host => host.trim().toLowerCase()).filter(Boolean));
+  const canonicalOrigin = new URL(SITE_URL).origin;
   const home = buildHomePage({ contactEmail, mediaPreview: false });
   const missing = page({
     title: 'Page not found', mediaPreview: false, narrow: true,
@@ -40,10 +45,18 @@ export function createServiceServer({ contactEmail = process.env.CONTACT_EMAIL }
   });
   const server = http.createServer(async (req, res) => {
     try {
-      const pathname = new URL(req.url, 'http://localhost').pathname;
+      const url = new URL(req.url, 'http://localhost');
+      const pathname = url.pathname;
       const asset = pathname.startsWith('/static/') ? pathname.slice('/static/'.length) : '';
       const known = pathname === '/' || pathname === '/health' || ASSETS.has(asset);
       securityHeaders(res, pathname === '/' ? home : missing);
+      // Only configured aliases redirect; never build destinations from request headers.
+      const host = (req.headers.host || '').toLowerCase().replace(/:\d+$/, '').replace(/\.$/, '');
+      if (retiredHosts.has(host) && host !== new URL(canonicalOrigin).hostname &&
+          pathname !== '/health' && ['GET', 'HEAD'].includes(req.method)) {
+        res.setHeader('Location', `${canonicalOrigin}${pathname}${url.search}`);
+        return respond(req, res, 308, 'text/plain; charset=utf-8', 'Moved to Working Access', 'no-store');
+      }
       if (!known) return respond(req, res, 404, 'text/html; charset=utf-8', missing, 'no-store');
       if (!['GET', 'HEAD'].includes(req.method)) {
         res.setHeader('Allow', 'GET, HEAD');

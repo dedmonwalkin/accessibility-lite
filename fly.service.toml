@@ -10,15 +10,14 @@ primary_region = "iad"
   PORT = "3000"
   NODE_ENV = "production"
   SITE_URL = "https://workingaccess.org"
-  # Transitional verified mailbox; do not replace until new email is tested.
-  CONTACT_EMAIL = "bob@whakauru.com"
+  CONTACT_EMAIL = "bob@workingaccess.org"
+  REDIRECT_HOSTS = "whakauru.com,www.whakauru.com,whakauru.fly.dev,www.workingaccess.org"
 
 [http_service]
   internal_port = 3000
   force_https = true
   auto_stop_machines = "stop"
-  # Paused for rebrand. A future deployment can start machines even with this off.
-  auto_start_machines = false
+  auto_start_machines = true
   min_machines_running = 0
 
   [[http_service.checks]]

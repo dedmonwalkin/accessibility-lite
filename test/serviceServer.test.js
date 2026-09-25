@@ -1,6 +1,7 @@
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { request } from 'node:http';
 import { createServiceServer } from '../src/serviceServer.js';
 
 let server, base;
@@ -15,13 +16,73 @@ test('service-only homepage retains enquiries and guide, without media navigatio
   const res = await fetch(base);
   assert.equal(res.status, 200);
   const html = await res.text();
-  assert.match(html, /mailto:bob@whakauru\.com/);
+  assert.match(html, /mailto:bob@workingaccess\.org/);
   assert.doesNotMatch(html, /mailto:(?:hello|aoda|accessibility)@/);
   assert.match(html, /Working Access/);
   assert.match(html, /id="projectPlanner"/);
   assert.match(html, /Media accessibility planning/);
   assert.doesNotMatch(html, /href="\/media|href="\/embed|id="pipeline"|Media preview/);
   assert.match(html, /id="main" tabindex="-1"/);
+});
+
+test('configured old hosts redirect safely while health and write restrictions remain intact', async () => {
+  const aliasServer = createServiceServer({
+    redirectHosts: 'whakauru.com, www.whakauru.com, whakauru.fly.dev, www.workingaccess.org, workingaccess.org'
+  });
+  await new Promise(resolve => aliasServer.listen(0, '127.0.0.1', resolve));
+  const aliasBase = `http://127.0.0.1:${aliasServer.address().port}`;
+  // Node's fetch can ignore Host overrides; raw HTTP exercises actual ingress headers.
+  const aliasFetch = (url, options = {}) => new Promise((resolve, reject) => {
+    const req = request(url, options, res => {
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { body += chunk; });
+      res.on('error', reject);
+      res.on('end', () => resolve({
+        status: res.statusCode,
+        headers: new Headers(res.headers),
+        text: async () => body
+      }));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+  try {
+    for (const host of ['whakauru.com', 'WWW.WHAKAURU.COM:443', 'whakauru.com.', 'whakauru.fly.dev', 'www.workingaccess.org']) {
+      for (const method of ['GET', 'HEAD']) {
+        const res = await aliasFetch(aliasBase + '/?source=old', { method, headers: { Host: host } });
+        assert.equal(res.status, 308, host);
+        assert.equal(res.headers.get('location'), 'https://workingaccess.org/?source=old');
+        assert.equal(res.headers.get('cache-control'), 'no-store');
+        const body = await res.text();
+        assert.doesNotMatch(body, /<!doctype|Whakauru/);
+        if (method === 'HEAD') assert.equal(body, '');
+      }
+    }
+    for (const path of ['/static/fonts/OFL.txt', '//evil.example/path']) {
+      const res = await aliasFetch(aliasBase + path, { headers: { Host: 'whakauru.com' } });
+      assert.equal(res.status, 308);
+      assert.equal(new URL(res.headers.get('location')).origin, 'https://workingaccess.org');
+      await res.text();
+    }
+    for (const host of ['workingaccess.org', 'preview.example.org', 'whakauru.com.evil.example']) {
+      const res = await aliasFetch(aliasBase, { headers: { Host: host, 'X-Forwarded-Host': 'whakauru.com' } });
+      assert.equal(res.status, 200, host);
+      assert.equal(res.headers.get('location'), null);
+      await res.text();
+    }
+    const health = await aliasFetch(aliasBase + '/health', { headers: { Host: 'whakauru.com' } });
+    assert.equal(health.status, 200);
+    await health.text();
+    for (const [path, status] of [['/', 405], ['/v1/jobs', 404]]) {
+      const res = await aliasFetch(aliasBase + path, { method: 'POST', headers: { Host: 'whakauru.com' } });
+      assert.equal(res.status, status);
+      assert.equal(res.headers.get('location'), null);
+      await res.text();
+    }
+  } finally {
+    await new Promise(resolve => aliasServer.close(resolve));
+  }
 });
 
 test('unknown service pages use the new identity without exposing media navigation', async () => {

@@ -7,22 +7,26 @@ not a prerequisite. The private project-home repository is never a build context
 
 ## Release procedure
 
-**Paused as of September 24, 2026. Do not run a release until authorized.**
-Machine `82d1477b227628` is stopped with service autostart disabled. Its image
-remains `registry.fly.io/whakauru:7af0a9d`. The app name is an infrastructure
+**Relaunch authorized September 24, 2026.** The owner approved deployment,
+workingaccess.org/www routing, redirects from the old site, and confirmed the
+tested bob@workingaccess.org mailbox. Before deployment, machine
+`82d1477b227628` is paused on image `registry.fly.io/whakauru:7af0a9d`.
+The app name is an infrastructure
 identifier, not the public brand; no replacement app or subscription is needed.
 This pause does not delete resources or guarantee that all charges stop.
 
-Before the next release, verify the new mailbox (or explicitly approve retaining
-the old contact), authorize and verify `workingaccess.org` DNS/certificates,
-and decide how the old domains should behave. They still point here, so simply
-restarting this app would also expose the new site through old hostnames.
-No new-domain setup or old-domain redirect has been performed.
+`fly.service.toml` uses the new SITE_URL and CONTACT_EMAIL, restores automatic
+startup, and configures explicit redirect hosts: whakauru.com, www.whakauru.com,
+whakauru.fly.dev and www.workingaccess.org. GET/HEAD requests to those hosts
+receive HTTP 308 to the trusted canonical origin, preserving path/query. The
+health endpoint stays available; write methods retain 404/405 restrictions.
+The canonical hostname is never redirected back to itself. Local/self-hosted
+servers do not redirect unless REDIRECT_HOSTS is configured.
 
-`fly.service.toml` stages the new SITE_URL, retains the verified old CONTACT_EMAIL,
-and keeps auto-start false. This setting is not a deployment lock: deploying or
-manually starting a machine can still make it public. Enable auto-start only as
-part of the approved relaunch, then follow the procedure below.
+Verify DNS/certificate issuance before running the approved deployment, then
+verify redirects and the canonical page after release. Do not restore the old
+image as a routine rollback: that would resurrect the retired Whakauru website.
+If the new release fails, pause the machine while fixing it instead.
 
 1. Fetch and review Git status; stop on unexpected concurrent changes.
 2. Run `npm test` and build/smoke-test `Dockerfile.service`.
@@ -34,19 +38,34 @@ part of the approved relaunch, then follow the procedure below.
 
 This config selects the service-only Dockerfile and an explicit build allowlist.
 The normal release uses one shared 256 MB machine that auto-stops when idle and
-auto-starts for requests; automatic startup is currently disabled for the pause.
+auto-starts for requests; the approved release restores that behavior.
 Cold starts are possible; this is not a high-availability configuration. No
 volumes, databases, providers or application secrets are required. Hosting usage
 is billed by Fly. The app region is not a data-residency commitment.
 
-## Existing domain boundary (paused)
+## Domain boundary
 
-The owner authorized connecting `whakauru.com` after the initial Fly-hostname
-release. The paused machine retains `SITE_URL=https://whakauru.com`; the local
-code/config now stage `https://workingaccess.org` for a later authorized cutover.
+Working Access website DNS at Porkbun (TTL 600):
+
+| Type | Host | Value |
+| --- | --- | --- |
+| A | @ | 66.241.125.183 |
+| AAAA | @ | 2a09:8280:1::198:7300:0 |
+| CNAME | www | workingaccess.org |
+
+This replaces the apex ALIAS to `pixie.porkbun.com`; the old wildcard CNAME
+to that host is preserved. MX and SPF records are unchanged. New certificates
+cover workingaccess.org and www.workingaccess.org. No mail records, mailbox
+settings, nameservers or additional domains are modified by this release.
+
+### Retired site
+
+The owner previously authorized connecting `whakauru.com` after the initial
+Fly-hostname release. The new release uses `SITE_URL=https://workingaccess.org`.
 Fly manages certificates for both `whakauru.com` and `www.whakauru.com`.
 Before the pause, `www` served the same site with the apex canonical URL, not an
-application-level redirect. All these hostnames now reach the stopped app.
+application-level redirect. After this release these hostnames redirect, rather
+than serving a second copy of the website. Retain their TLS for secure redirects.
 
 Website DNS at Porkbun (TTL 600):
 

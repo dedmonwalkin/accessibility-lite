@@ -4,11 +4,11 @@
 experimental open-source media workbench. This checkout is being rebranded from
 Whakauru to Working Access; repository and integration identifiers stay unchanged.
 The intended public origin is `https://workingaccess.org`, not a claim of deployment.
-The previous website is paused while this local rebrand is reviewed.
+The owner approved launch on the new domain with redirects from the retired site.
 
 For the isolated service-site candidate, run `npm run start:service` and read
-[SERVICE-ONLY.md](SERVICE-ONLY.md). Contact defaults to `bob@whakauru.com`.
-This verified mailbox is transitional; do not switch to an untested address.
+[SERVICE-ONLY.md](SERVICE-ONLY.md). Contact defaults to `bob@workingaccess.org`,
+which the owner confirms has passed inbound/outbound delivery tests.
 `npm start` runs the full media app, whose authorization and privacy launch gates
 remain open. Mock providers are the default; outputs require human review and
 experimental sign gloss is not sign-language interpretation.
@@ -256,7 +256,8 @@ Publishing triggers an immediate Postgres snapshot. This matters on Fly, where `
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SITE_URL` | `https://workingaccess.org` | Intended public origin for canonical/OG tags and generated snippets; override for your deployment |
-| `CONTACT_EMAIL` | `bob@whakauru.com` | Plain mailbox for general and accessibility enquiries; empty/invalid values hide both links |
+| `CONTACT_EMAIL` | `bob@workingaccess.org` | Plain mailbox for general and accessibility enquiries; empty/invalid values hide both links |
+| `REDIRECT_HOSTS` | empty | Service-only server: comma-separated aliases redirected to SITE_URL's origin for GET/HEAD, except health checks; never inferred from forwarded headers |
 
 ## Tests
 

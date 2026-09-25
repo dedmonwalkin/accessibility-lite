@@ -43,13 +43,12 @@ test('media presentation is rebranded without breaking legacy embed attributes',
   }
 });
 
-test('the rebrand retains verified email and legacy appearance preferences', () => {
+test('the rebrand uses the verified new email and retains legacy appearance preferences', () => {
   const html = uiService.buildHomePage({ mediaPreview: false });
-  assert.equal((html.match(/mailto:bob@whakauru\.com/g) || []).length, 2);
-  assert.doesNotMatch(html, /mailto:[^"\s]*@workingaccess\.org/);
+  assert.equal((html.match(/mailto:bob@workingaccess\.org/g) || []).length, 2);
+  assert.doesNotMatch(html, /whakauru/i);
   assert.match(html, /inclusy-theme/);
   assert.match(html, /inclusy-text-size/);
-  const migrated = uiService.buildHomePage({ contactEmail: 'bob@workingaccess.org', mediaPreview: false });
-  assert.equal((migrated.match(/mailto:bob@workingaccess\.org/g) || []).length, 2);
-  assert.doesNotMatch(migrated, /whakauru/i);
+  const custom = uiService.buildHomePage({ contactEmail: 'contact@example.org', mediaPreview: false });
+  assert.equal((custom.match(/mailto:contact@example\.org/g) || []).length, 2);
 });

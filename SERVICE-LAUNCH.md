@@ -1,8 +1,19 @@
 # Service-first website draft
 
 Current branch: `codex/working-access-rebrand`, based on service release `703e1df`.
-September 24: local Working Access rebrand; previous Whakauru deployment paused.
+September 24: Working Access rebrand approved and pushed as `cd27bd9`;
+the owner subsequently authorized new-domain launch and old-domain redirects.
 The earlier launch records below retain their original scope and dates.
+
+## September 24 release routing
+
+The owner confirmed successful tests of bob@workingaccess.org; default and
+production contact now use that mailbox. Explicit retired/www hostname routing
+uses HTTP 308 to the trusted canonical origin, with health checks excluded and
+writes still rejected. Tests cover GET/HEAD, case/port/trailing-dot variants,
+canonical-loop prevention, forwarded-host spoofing, path handling and write
+restrictions. Fly auto-start is enabled for the approved relaunch. No mailbox
+configuration or experimental-media deployment is included.
 
 ## September 24 Working Access checkpoint
 

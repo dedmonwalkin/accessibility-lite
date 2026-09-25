@@ -10,7 +10,7 @@ test('service homepage separates proposed engagements from media experiments', (
     assert.ok(html.includes(`id="${id}"`));
   }
   assert.ok(html.includes('href="/media"'));
-  assert.equal((html.match(/href="mailto:bob@whakauru.com"/g) || []).length, 2);
+  assert.equal((html.match(/href="mailto:bob@workingaccess.org"/g) || []).length, 2);
   assert.ok(html.includes('not legal advice, government certification'));
   assert.ok(html.includes('A format example, not a client finding'));
   assert.ok(!html.includes('id="uploadForm"'));
@@ -19,7 +19,7 @@ test('service homepage separates proposed engagements from media experiments', (
 test('only a valid configured mailbox enables contact', () => {
   const html = uiService.buildHomePage({ contactEmail: ' enquiries@example.org ' });
   assert.equal((html.match(/href="mailto:enquiries@example.org"/g) || []).length, 2);
-  assert.ok(!html.includes('mailto:bob@whakauru.com'));
+  assert.ok(!html.includes('mailto:bob@workingaccess.org'));
   assert.ok(!html.includes('Client enquiries are not open yet'));
   for (const contactEmail of [null, 42, '', 'hello', 'a@b.org?bcc=x@y.org', 'a@b.org\r\nBcc:x@y.org', '\"><script>alert(1)</script>@b.org']) {
     const invalid = uiService.buildHomePage({ contactEmail });
