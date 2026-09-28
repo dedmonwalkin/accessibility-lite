@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Working Access - Your page. Your pace.",
+  "version": "0.1.0",
+  "description": "A personal reading companion with comfortable text and optional local-device speech. Experimental; not an audit or compliance tool.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "action": {"default_title": "Open Working Access reading view"},
+  "background": {"service_worker": "background.js", "type": "module"},
+  "content_security_policy": {"extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'"}
+}

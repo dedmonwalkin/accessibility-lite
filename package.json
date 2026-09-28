@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "start:service": "node src/serviceServer.js",
-    "test": "node --test"
+    "test": "node --test",
+    "build:extension": "node extension/build.mjs",
+    "preview:extension": "node extension/preview.mjs"
   },
   "engines": {
     "node": ">=20"
