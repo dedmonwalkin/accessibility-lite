@@ -1,5 +1,6 @@
 import { escapeHtml } from './escape.js';
 import { BASE_STYLES } from './tokens.js';
+import { READING_BAR_HTML, READING_BAR_STYLES, READING_BAR_SCRIPT } from './readingBar.js';
 
 export const SITE_URL = (process.env.SITE_URL || 'https://workingaccess.org').replace(/\/$/, '');
 
@@ -69,6 +70,8 @@ const PREFERENCE_CONTROLS_SCRIPT = `
 
     paintSize();
     paintTheme();
+    window.addEventListener('reading-preferences-reset', function () { paintSize(); paintTheme(); });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintTheme);
   })();`;
 
 const CHROME_STYLES = `
@@ -147,11 +150,12 @@ function header({ compact = false, mediaPreview = true } = {}) {
         <a href="/#name">Our purpose</a>
         ${mediaPreview ? '<a href="/media">Media preview</a>' : '<a href="/#accessibility">Accessibility</a>'}
         <a href="/#contact">Contact</a>
-        <div class="pref-controls">
+        ${mediaPreview ? `<div class="pref-controls">
           <button type="button" class="pref-btn" id="textSizeToggle" aria-label="Change text size">A</button>
           <button type="button" class="pref-btn" id="themeToggle" aria-label="Switch theme">Dark</button>
-        </div>
+        </div>` : ''}
       </nav>
+      ${mediaPreview ? '' : READING_BAR_HTML}
     </div>
   </header>`;
 }
@@ -210,7 +214,7 @@ export function page({
   <link rel="preload" href="/static/fonts/atkinson-400-latin.woff2" as="font" type="font/woff2" crossorigin />
 ${head}
   <script>${PREFERENCE_BOOT}</script>
-  <style>${BASE_STYLES}${CHROME_STYLES}${styles}</style>
+  <style>${BASE_STYLES}${CHROME_STYLES}${mediaPreview ? '' : READING_BAR_STYLES}${styles}</style>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -220,6 +224,7 @@ ${body}
   </main>
 ${footer({ compact, mediaPreview })}
   <script>${PREFERENCE_CONTROLS_SCRIPT}</script>
+${mediaPreview ? '' : `<script>${READING_BAR_SCRIPT}</script>`}
 ${scripts ? `  <script>${scripts}</script>` : ''}
 </body>
 </html>`;

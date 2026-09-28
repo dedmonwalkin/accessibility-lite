@@ -7,6 +7,7 @@ ENV PORT=3000
 COPY package.json ./
 COPY src/serviceServer.js src/serviceServer.js
 COPY src/ui/layout.js src/ui/tokens.js src/ui/escape.js src/ui/homeStyles.js src/ui/projectPlanner.js src/ui/
+COPY src/ui/readingBar.js src/ui/readingBar.js
 COPY src/ui/pages/home.js src/ui/pages/home.js
 COPY public/ public/
 

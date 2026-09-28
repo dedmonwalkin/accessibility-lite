@@ -18,7 +18,7 @@ export function buildHomePage({ contactEmail = 'bob@workingaccess.org', mediaPre
     styles: HOME_STYLES,
     body: `
     <div class="civic-home">
-      <section class="civic-hero" aria-labelledby="home-title">
+      <section class="civic-hero" aria-labelledby="home-title" data-reading-section>
         <div class="hero-copy">
           <p class="eyebrow">Digital accessibility / Public-facing services</p>
           <h1 id="home-title">Nobody gets<br>left off <em>the map.</em></h1>
@@ -48,7 +48,7 @@ export function buildHomePage({ contactEmail = 'bob@workingaccess.org', mediaPre
         <span>Evidence before assurances</span><span>People before scores</span><span>Clear scope. Honest limits.</span>
       </div>
 
-      <section class="civic-section" id="services" aria-labelledby="services-title">
+      <section class="civic-section" id="services" aria-labelledby="services-title" data-reading-section>
         <div class="section-intro">
           <div><p class="eyebrow">01 / The proposed practice</p><h2 id="services-title">Know where you stand.<br>Know what comes next.</h2></div>
           <p>Not every organization needs the same engagement. Start with a defined scope, the people affected, and a deliverable your team can actually use.</p>
@@ -113,22 +113,22 @@ export function buildHomePage({ contactEmail = 'bob@workingaccess.org', mediaPre
         <div class="media-notes"><h3>Useful tools. Human judgment.</h3><p>Mock providers are enabled by default. Outputs need accuracy and accessibility review before publication.</p><p>Sign gloss is not sign-language interpretation. Self-hosting does not, by itself, establish privacy compliance or data residency.</p><a href="https://github.com/dedmonwalkin/accessibility-lite">Explore the source code</a></div>
       </section>` : ''}
 
-      <section class="civic-section boundaries" aria-labelledby="scope-title">
+      <section class="civic-section boundaries" aria-labelledby="scope-title" data-reading-section>
         <div><p class="eyebrow">Before an engagement</p><h2 id="scope-title">Trust starts with<br>clear boundaries.</h2></div>
         <div class="boundary-copy"><p>Agree the scope, deliverables, timetable, access needs, data handling, and fees in writing before work begins. Procurement requirements should be discussed, not assumed.</p><p>A scan or accessibility menu does not establish compliance. Our proposed deliverables are not legal advice, government certification, or a guarantee of compliance.</p><p>Our proposed reporting role is to prepare supporting evidence, not to certify on a client's behalf. Legal questions belong with qualified counsel.</p></div>
       </section>
 
-      <section class="civic-section name-section" id="name" aria-labelledby="name-title">
+      <section class="civic-section name-section" id="name" aria-labelledby="name-title" data-reading-section>
         <div><p class="eyebrow">Our purpose</p><h2 id="name-title">Access that works.<br>Work that matters.</h2></div>
         <div class="name-copy"><p>People visit public websites to do something: report a problem, apply for a permit, read a council agenda, or follow a meeting. Access matters when those tasks work for the people who need them.</p><p>A form that cannot be completed with a keyboard. A meeting without captions. A document that a screen reader cannot navigate. Our work starts by looking for the people and tasks a design has missed.</p><div class="name-note"><h3>Why Working Access?</h3><p>The name keeps the focus on practical progress: find the barrier, agree the next step, and check whether the change helps. Not just a higher score. A service someone can use.</p></div></div>
       </section>
 
-      <section class="civic-section accessibility-section" id="accessibility" aria-labelledby="accessibility-title">
+      <section class="civic-section accessibility-section" id="accessibility" aria-labelledby="accessibility-title" data-reading-section>
         <div><p class="eyebrow">Access to this site</p><h2 id="accessibility-title">The conversation<br>should be accessible, too.</h2></div>
         <div><p>Our design target is WCAG 2.2 Level AA. This site is under development; this is a target, not a conformance claim or independent certification.</p><p>Use the text-size and theme controls in the header, or your browser's zoom. The site includes keyboard focus indicators and respects reduced-motion preferences.</p><p>Found a barrier? Tell us the page, what you were trying to do, and your preferred way to receive a reply. Please leave out sensitive personal information. Use the same contact below for accessibility enquiries.</p>${contact}</div>
       </section>
 
-      <section class="contact-section" id="contact" aria-labelledby="contact-title">
+      <section class="contact-section" id="contact" aria-labelledby="contact-title" data-reading-section>
         <div><p class="eyebrow">A good place to begin</p><h2 id="contact-title">Tell us what people<br>need to be able to do.</h2><p>A website, a document, a council meeting.<br>Start with the service and the people it needs to reach.</p>${contact}</div>
         <aside class="contact-brief" aria-labelledby="brief-title"><h3 id="brief-title">For a useful first conversation</h3><ul><li>Your organization and location</li><li>The website, document, or media involved</li><li>A barrier you know about, or a question you have</li><li>Your timeframe and preferred reply format</li></ul><p class="small">Please do not email passwords, confidential documents, or sensitive records. A message starts a conversation, not an engagement.</p></aside>
       </section>
