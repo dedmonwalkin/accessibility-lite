@@ -74,6 +74,42 @@ const PREFERENCE_CONTROLS_SCRIPT = `
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintTheme);
   })();`;
 
+const SERVICE_NAV_SCRIPT = `
+  (function () {
+    var toggle = document.getElementById('menuToggle');
+    var nav = document.getElementById('siteNavigation');
+    if (!toggle || !nav) return;
+    var narrow = window.matchMedia('(max-width: 768px)');
+    var open = false;
+    toggle.hidden = false;
+    function paint() {
+      nav.hidden = narrow.matches && !open;
+      toggle.setAttribute('aria-expanded', String(!nav.hidden));
+    }
+    toggle.addEventListener('click', function () { open = !open; paint(); });
+    nav.addEventListener('click', function (event) {
+      if (narrow.matches && event.target.closest('a')) {
+        // Focus the destination before hiding the navigation link.
+        var target = document.getElementById(event.target.closest('a').hash.slice(1));
+        if (target) { target.setAttribute('tabindex', '-1'); target.focus(); } else toggle.focus();
+        open = false;
+        paint();
+      }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !event.defaultPrevented && narrow.matches && open &&
+          (nav.contains(document.activeElement) || document.activeElement === toggle)) {
+        toggle.focus(); open = false; paint(); event.preventDefault();
+      }
+    });
+    narrow.addEventListener('change', function () {
+      if (narrow.matches && nav.contains(document.activeElement)) open = true;
+      if (!narrow.matches && document.activeElement === toggle) nav.querySelector('a').focus();
+      paint();
+    });
+    paint();
+  })();`;
+
 const CHROME_STYLES = `
   .skip-link {
     position: absolute; left: var(--s4); top: -100px;
@@ -102,6 +138,8 @@ const CHROME_STYLES = `
   .site-nav { display: flex; gap: var(--s4); margin-left: auto; align-items: center; flex-wrap: wrap; }
   .site-nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink-muted); text-decoration: none; font-size: var(--text-sm); font-weight: 700; }
   .site-nav a:hover { color: var(--ink); text-decoration: underline; }
+  .site-nav[hidden], .menu-toggle[hidden] { display: none; }
+  .menu-toggle { display: none; margin-left: auto; border-radius: 999px; }
 
   .pref-controls { display: flex; gap: var(--s2); }
   .pref-btn {
@@ -128,6 +166,9 @@ const CHROME_STYLES = `
   @media (max-width: 768px) {
     .site-header .inner { gap: var(--s3); }
     .site-nav { gap: var(--s3); width: 100%; margin-left: 0; }
+    .menu-toggle:not([hidden]) { display: inline-flex; align-items: center; justify-content: center; }
+    .service-header .inner { padding: var(--s3); gap: var(--s3); }
+    .service-header .wordmark { font-size: 1.1rem; }
   }
 `;
 
@@ -141,10 +182,11 @@ function markSvg() {
 function header({ compact = false, mediaPreview = true } = {}) {
   if (compact) return '';
   return `
-  <header class="site-header">
+  <header class="site-header${mediaPreview ? '' : ' service-header'}">
     <div class="inner">
       <a class="wordmark" href="/">${markSvg()} Working Access</a>
-      <nav class="site-nav" aria-label="Main">
+      ${mediaPreview ? '' : '<button type="button" class="pref-btn menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNavigation" hidden>Menu</button>'}
+      <nav class="site-nav" aria-label="Main" id="siteNavigation">
         <a href="/#services">Services</a>
         <a href="/#approach">Approach</a>
         <a href="/#name">Our purpose</a>
@@ -224,7 +266,7 @@ ${body}
   </main>
 ${footer({ compact, mediaPreview })}
   <script>${PREFERENCE_CONTROLS_SCRIPT}</script>
-${mediaPreview ? '' : `<script>${READING_BAR_SCRIPT}</script>`}
+${mediaPreview ? '' : `<script>${SERVICE_NAV_SCRIPT}</script><script>${READING_BAR_SCRIPT}</script>`}
 ${scripts ? `  <script>${scripts}</script>` : ''}
 </body>
 </html>`;
