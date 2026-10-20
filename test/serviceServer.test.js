@@ -2,6 +2,7 @@ import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { request } from 'node:http';
+import { readFile } from 'node:fs/promises';
 import { createServiceServer } from '../src/serviceServer.js';
 
 let server, base;
@@ -128,11 +129,29 @@ test('service static routes use an explicit asset allowlist', async () => {
     assert.ok((await res.arrayBuffer()).byteLength > 0);
   }
   for (const path of ['/static/../package.json', '/static/%2e%2e%2fpackage.json',
-    '/static/%2e%2e%2fuploads/test.wav', '/static/unknown.js', '/static/og.png', '/uploads/test.wav', '/src/server.js']) {
+    '/static/%2e%2e%2fuploads/test.wav', '/static/unknown.js', '/static/og.png',
+    '/static/brand/unknown.png', '/static/brand/Mark%20component.png',
+    '/static/brand/%2e%2e%2fpackage.json', '/uploads/test.wav', '/src/server.js']) {
     const res = await fetch(base + path);
     assert.equal(res.status, 404, path);
     await res.text();
   }
+});
+
+test('the supplied brand mark is served intact for GET and HEAD with image headers', async () => {
+  const expected = await readFile(new URL('../public/brand/working-access-mark.png', import.meta.url));
+  const res = await fetch(base + '/static/brand/working-access-mark.png');
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('content-type'), 'image/png');
+  assert.equal(res.headers.get('content-length'), String(expected.length));
+  assert.equal(res.headers.get('cache-control'), 'public, max-age=86400');
+  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+  assert.deepEqual(Buffer.from(await res.arrayBuffer()), expected);
+  const head = await fetch(base + '/static/brand/working-access-mark.png', { method: 'HEAD' });
+  assert.equal(head.status, 200);
+  assert.equal(head.headers.get('content-type'), 'image/png');
+  assert.equal(head.headers.get('content-length'), String(expected.length));
+  assert.equal(await head.text(), '');
 });
 
 test('service responds correctly to HEAD and disallows writes to allowed resources', async () => {
@@ -142,7 +161,7 @@ test('service responds correctly to HEAD and disallows writes to allowed resourc
   assert.equal(head.headers.get('content-length'), get.headers.get('content-length'));
   assert.equal(await head.text(), '');
   await get.text();
-  for (const path of ['/', '/health', '/static/fonts/OFL.txt']) {
+  for (const path of ['/', '/health', '/static/fonts/OFL.txt', '/static/brand/working-access-mark.png']) {
     const res = await fetch(base + path, { method: 'POST', body: 'not stored' });
     assert.equal(res.status, 405);
     assert.equal(res.headers.get('allow'), 'GET, HEAD');

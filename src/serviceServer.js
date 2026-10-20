@@ -7,6 +7,7 @@ import { page, SITE_URL } from './ui/layout.js';
 
 // Deliberately independent of server.js: no jobs, providers, database or timers.
 const ASSETS = new Map([
+  ['brand/working-access-mark.png', 'image/png'],
   ['fonts/OFL.txt', 'text/plain; charset=utf-8'],
   ...['400', '700'].flatMap(weight => ['latin', 'latin-ext'].map(subset =>
     [`fonts/atkinson-${weight}-${subset}.woff2`, 'font/woff2']))

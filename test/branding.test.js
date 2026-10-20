@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { uiService } from '../src/services/uiService.js';
 
 test('Working Access identity and practical purpose replace the former name story', () => {
@@ -51,4 +52,27 @@ test('the rebrand uses the verified new email and retains legacy appearance pref
   assert.match(html, /inclusy-text-size/);
   const custom = uiService.buildHomePage({ contactEmail: 'contact@example.org', mediaPreview: false });
   assert.equal((custom.match(/mailto:contact@example\.org/g) || []).length, 2);
+});
+
+test('shared headers and browser icons use the supplied mark without repeating the link name', () => {
+  for (const html of [uiService.buildHomePage({ mediaPreview: false }),
+    uiService.buildUploadPage(), uiService.buildErrorPage(404, 'Not found', 'Page missing')]) {
+    const wordmark = html.match(/<a class="wordmark" href="\/">([\s\S]*?)<\/a>/)?.[1];
+    assert.ok(wordmark);
+    assert.match(wordmark, /<img class="brand-mark" src="\/static\/brand\/working-access-mark\.png" alt="" width="800" height="800"/);
+    assert.match(wordmark, /<span>Working Access<\/span>/);
+    assert.doesNotMatch(wordmark, /<svg|tabindex|aria-label/);
+    assert.match(html, /rel="icon" type="image\/png" sizes="800x800" href="\/static\/brand\/working-access-mark\.png"/);
+    assert.match(html, /rel="apple-touch-icon" href="\/static\/brand\/working-access-mark\.png"/);
+    assert.doesNotMatch(html, /data:image\/svg\+xml/);
+  }
+});
+
+test('the brand asset retains the supplied square PNG dimensions and RGBA format', async () => {
+  const png = await readFile(new URL('../public/brand/working-access-mark.png', import.meta.url));
+  assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.equal(png.toString('ascii', 12, 16), 'IHDR');
+  assert.equal(png.readUInt32BE(16), 800);
+  assert.equal(png.readUInt32BE(20), 800);
+  assert.equal(png[25], 6);
 });

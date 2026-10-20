@@ -4,12 +4,7 @@ import { READING_BAR_HTML, READING_BAR_STYLES, READING_BAR_SCRIPT } from './read
 
 export const SITE_URL = (process.env.SITE_URL || 'https://workingaccess.org').replace(/\/$/, '');
 
-const FAVICON_SVG = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">' +
-  '<rect width="32" height="32" rx="4" fill="#0B5D51"/>' +
-  '<path d="M7 23L13 9l6 14 6-14M7 16h18" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>' +
-  '</svg>'
-)}`;
+const BRAND_MARK = '/static/brand/working-access-mark.png';
 
 /**
  * Runs before first paint so the stored theme and text size apply without a
@@ -130,11 +125,15 @@ const CHROME_STYLES = `
     flex-wrap: wrap;
   }
   .wordmark {
-    display: inline-flex; align-items: center; gap: var(--s2);
+    display: inline-flex; align-items: center; gap: var(--s3);
+    min-height: 44px; max-width: 100%;
     font-weight: 700; font-size: var(--text-lg);
     color: var(--ink); text-decoration: none; letter-spacing: -0.01em;
   }
-  .wordmark svg { width: 1.35em; height: 1.35em; }
+  .brand-mark {
+    display: block; width: 2.5rem; height: 2.5rem;
+    flex: 0 0 auto; object-fit: contain; border-radius: 12.5%;
+  }
   .site-nav { display: flex; gap: var(--s4); margin-left: auto; align-items: center; flex-wrap: wrap; }
   .site-nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink-muted); text-decoration: none; font-size: var(--text-sm); font-weight: 700; }
   .site-nav a:hover { color: var(--ink); text-decoration: underline; }
@@ -169,22 +168,16 @@ const CHROME_STYLES = `
     .menu-toggle:not([hidden]) { display: inline-flex; align-items: center; justify-content: center; }
     .service-header .inner { padding: var(--s3); gap: var(--s3); }
     .service-header .wordmark { font-size: 1.1rem; }
+    .brand-mark { width: 2.25rem; height: 2.25rem; }
   }
 `;
-
-function markSvg() {
-  return '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">' +
-    '<rect width="32" height="32" rx="4" fill="var(--accent)"/>' +
-    '<path d="M7 23L13 9l6 14 6-14M7 16h18" fill="none" stroke="var(--on-accent)" stroke-width="2" stroke-linejoin="round"/>' +
-    '</svg>';
-}
 
 function header({ compact = false, mediaPreview = true } = {}) {
   if (compact) return '';
   return `
   <header class="site-header${mediaPreview ? '' : ' service-header'}">
     <div class="inner">
-      <a class="wordmark" href="/">${markSvg()} Working Access</a>
+      <a class="wordmark" href="/"><img class="brand-mark" src="${BRAND_MARK}" alt="" width="800" height="800" decoding="async" /><span>Working Access</span></a>
       ${mediaPreview ? '' : '<button type="button" class="pref-btn menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNavigation" hidden>Menu</button>'}
       <nav class="site-nav" aria-label="Main" id="siteNavigation">
         <a href="/#services">Services</a>
@@ -252,7 +245,8 @@ export function page({
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${escapeHtml(fullTitle)}" />
   <meta name="twitter:description" content="${escapeHtml(description)}" />
-  <link rel="icon" type="image/svg+xml" href="${FAVICON_SVG}" />
+  <link rel="icon" type="image/png" sizes="800x800" href="${BRAND_MARK}" />
+  <link rel="apple-touch-icon" href="${BRAND_MARK}" />
   <link rel="preload" href="/static/fonts/atkinson-400-latin.woff2" as="font" type="font/woff2" crossorigin />
 ${head}
   <script>${PREFERENCE_BOOT}</script>
