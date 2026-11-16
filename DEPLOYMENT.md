@@ -1,7 +1,8 @@
 # Working Access service deployment
 
 The owner authorized a separate Fly app, `whakauru`, for the consulting website.
-The existing `inclusy` media app, volumes, secrets and custom domains stay untouched.
+Service releases leave the `inclusy` app, volumes, secrets and custom domains untouched;
+since November 16, 2026 that app only redirects (see "Retired Inclusy hosts").
 Rebrand work is on `codex/working-access-rebrand`; merging experimental branches is
 not a prerequisite. The private project-home repository is never a build context.
 
@@ -80,6 +81,44 @@ the existing wildcard CNAME to that host. The wildcard and existing TXT records
 were retained. MX, SPF, DKIM, DMARC, nameservers and Porkbun mailbox settings must
 not be changed by website releases. No `.org` routing or redirect is included.
 Verify certificate issuance and public HTTPS before calling a cutover complete.
+
+### Retired Inclusy hosts
+
+**Redirect authorized November 16, 2026.** Until this release the Fly app
+`inclusy` served the old upload application at inclusy.org, www.inclusy.org
+and inclusy.fly.dev with mock providers and no API key: uploads were open, and
+any file received fixed sample captions presented as AI transcription. The
+owner approved replacing it with a redirect to workingaccess.org.
+
+`fly.inclusy-redirect.toml` deploys the verified service-only image
+`registry.fly.io/whakauru:a47097c` to the `inclusy` app with those three hosts
+in REDIRECT_HOSTS. GET/HEAD requests receive HTTP 308 to the same path on
+https://workingaccess.org; old player and job links therefore reach the
+service site's "Page not found". POST `/v1/jobs` and `/v1/jobs/sample` return
+404. `/health` stays available for Fly checks.
+
+```sh
+flyctl config validate --strict --config fly.inclusy-redirect.toml
+flyctl deploy --config fly.inclusy-redirect.toml --ha=false
+```
+
+This release changes no DNS, certificates, mail records or secrets. The
+existing Fly certificates for inclusy.org and www.inclusy.org are what make the
+HTTPS redirect work; keep them. The `alite_uploads` volume stays attached and
+unread, and the `DATABASE_URL` secret and its database are left as they were.
+Because the old application no longer runs, its 24-hour cleanup no longer runs
+either: files already uploaded remain on the volume until the owner approves
+wiping it. That cleanup, and any removal of the volume, secret or database, is
+destructive and needs separate approval.
+
+The previous media image was built from an uncommitted working copy and cannot
+be rebuilt from Git. Its reference is
+`registry.fly.io/inclusy:deployment-01KRSNK87KVTGKDFSBM89GR73N` (digest
+`sha256:90c4b35f2fab3407e832aa1e33217440f5815397463c9602acb3dee4f6d6d05b`).
+Restoring it would put unlabelled sample captions and open uploads back on a
+public domain, so treat that as a new owner decision, not a routine rollback:
+`flyctl deploy --config fly.toml --image <that reference> --ha=false`. If the
+redirect release itself fails, pause the machine while fixing it instead.
 
 ## Rollback
 
