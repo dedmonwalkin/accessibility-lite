@@ -111,14 +111,24 @@ either: files already uploaded remain on the volume until the owner approves
 wiping it. That cleanup, and any removal of the volume, secret or database, is
 destructive and needs separate approval.
 
+**Cleanup after the release, each step separately approved by the owner.**
+On November 16 the 29 files left on the volume (1.1 GB, dated June and
+September 2026) were deleted; the volume is empty but still attached. Fly's
+automatic volume snapshots (5-day retention) keep copies until they age out,
+about November 21. The owner reports deleting the hosted Postgres project that
+held the old job records. On November 17 the now-unused `DATABASE_URL` secret
+was removed from the app (release v5, same image); the app has no secrets.
+Removing the empty volume remains a separate decision.
+
 The previous media image was built from an uncommitted working copy and cannot
 be rebuilt from Git. Its reference is
 `registry.fly.io/inclusy:deployment-01KRSNK87KVTGKDFSBM89GR73N` (digest
 `sha256:90c4b35f2fab3407e832aa1e33217440f5815397463c9602acb3dee4f6d6d05b`).
 Restoring it would put unlabelled sample captions and open uploads back on a
 public domain, so treat that as a new owner decision, not a routine rollback:
-`flyctl deploy --config fly.toml --image <that reference> --ha=false`. If the
-redirect release itself fails, pause the machine while fixing it instead.
+`flyctl deploy --config fly.toml --image <that reference> --ha=false`. It
+would also need a new database and `DATABASE_URL`, since the old ones are
+gone. If the redirect release itself fails, pause the machine while fixing it instead.
 
 ## Rollback
 
