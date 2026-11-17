@@ -1,0 +1,50 @@
+# Redirect-only release for the retired Inclusy hosts. See DEPLOYMENT.md,
+# "Retired Inclusy hosts". This is not the media app's fly.toml and not the
+# consulting site's fly.service.toml.
+#
+# The `inclusy` Fly app keeps its custom domains and certificates but stops
+# serving the old upload application. Every GET/HEAD request to the hosts in
+# REDIRECT_HOSTS receives HTTP 308 to https://workingaccess.org, and uploads
+# and job routes return 404. No DNS change is involved.
+app = "inclusy"
+primary_region = "iad"
+
+[build]
+  # The verified service-only image that serves workingaccess.org (commit
+  # a47097c, digest sha256:324dede33cdace80f8942c1ce8df98becd1054f785d84880f516688dbb53b53f).
+  # It contains no media server, providers, upload handling or database code.
+  image = "registry.fly.io/whakauru:a47097c"
+
+[env]
+  PORT = "3000"
+  NODE_ENV = "production"
+  SITE_URL = "https://workingaccess.org"
+  CONTACT_EMAIL = "bob@workingaccess.org"
+  REDIRECT_HOSTS = "inclusy.org,www.inclusy.org,inclusy.fly.dev"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+# The old upload volume stays attached and unread so the existing machine is
+# updated in place and nothing is deleted by this release. The service image
+# never opens this path. Wiping or removing the volume needs separate owner
+# approval; drop this block only after that.
+[[mounts]]
+  source = "alite_uploads"
+  destination = "/app/uploads"
